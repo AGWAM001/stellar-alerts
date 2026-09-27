@@ -276,15 +276,12 @@ export async function ssrfSafeFetch(
     const candidateUrls = validation.resolvedIps.map((ip) => buildUrlForResolvedIp(currentUrl, ip));
 
     let lastError: unknown;
+    let handledRedirect = false;
 
     for (const candidateUrl of candidateUrls) {
       try {
         const response = await fetch(candidateUrl, {
           ...init,
-          headers: {
-            ...init.headers,
-            Host: new URL(currentUrl).host,
-          },
           redirect: 'manual',
         });
 
@@ -303,6 +300,7 @@ export async function ssrfSafeFetch(
           const nextUrl = new URL(location, currentUrl).toString();
           currentUrl = nextUrl;
           redirectsCount++;
+          handledRedirect = true;
           break;
         }
 
@@ -312,6 +310,10 @@ export async function ssrfSafeFetch(
       }
     }
 
+    if (handledRedirect) {
+      continue;
+    }
+
     if (lastError) {
       throw lastError;
     }
@@ -319,8 +321,5 @@ export async function ssrfSafeFetch(
     break;
   }
 
-  return await fetch(currentUrl, {
-    ...init,
-    redirect: 'manual',
-  });
+  return new Response(null, { status: 204 });
 }
