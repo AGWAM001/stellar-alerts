@@ -138,6 +138,23 @@ export interface SsrfValidationOptions {
   dnsLookupFn?: (hostname: string) => Promise<string[]>;
 }
 
+function getPublicResolvedIps(resolvedIps: string[]): string[] {
+  return [...new Set(resolvedIps.filter((ip) => !isPrivateIp(ip)))];
+}
+
+function buildUrlForResolvedIp(targetUrl: string, resolvedIp: string): string {
+  const parsedUrl = new URL(targetUrl);
+  const isIpv6 = net.isIPv6(resolvedIp);
+  const host = isIpv6 ? `[${resolvedIp}]` : resolvedIp;
+  const port = parsedUrl.port || (parsedUrl.protocol === 'https:' ? '443' : '80');
+
+  const rewritten = new URL(targetUrl);
+  rewritten.hostname = host;
+  rewritten.port = port;
+
+  return rewritten.toString();
+}
+
 const DEFAULT_ALLOWED_PORTS = [80, 443, 8080, 8443];
 
 /**
@@ -226,17 +243,18 @@ export async function validateUrlForSsrf(
     throw new SsrfValidationError(`No IP addresses found for hostname "${hostname}"`, targetUrl, 'NO_IP_RESOLVED');
   }
 
-  for (const ip of resolvedIps) {
-    if (isPrivateIp(ip)) {
-      throw new SsrfValidationError(
-        `Destination resolves to restricted or private IP address (${ip})`,
-        targetUrl,
-        'PRIVATE_IP_BLOCKED',
-      );
-    }
+  const publicResolvedIps = getPublicResolvedIps(resolvedIps);
+
+  if (publicResolvedIps.length === 0) {
+    const blockedIp = resolvedIps[0] ?? rawHost;
+    throw new SsrfValidationError(
+      `Destination resolves to restricted or private IP address (${blockedIp})`,
+      targetUrl,
+      'PRIVATE_IP_BLOCKED',
+    );
   }
 
-  return { url: parsedUrl, resolvedIps };
+  return { url: parsedUrl, resolvedIps: publicResolvedIps };
 }
 
 /**
@@ -254,34 +272,55 @@ export async function ssrfSafeFetch(
   let redirectsCount = 0;
 
   while (true) {
-    // Validate current hop
-    await validateUrlForSsrf(currentUrl, init.ssrfOptions);
+    const validation = await validateUrlForSsrf(currentUrl, init.ssrfOptions);
+    const candidateUrls = validation.resolvedIps.map((ip) => buildUrlForResolvedIp(currentUrl, ip));
 
-    // Fetch with redirect set to manual so we inspect and validate every redirect location
-    const response = await fetch(currentUrl, {
-      ...init,
-      redirect: 'manual',
-    });
+    let lastError: unknown;
 
-    const isRedirect = [301, 302, 303, 307, 308].includes(response.status);
+    for (const candidateUrl of candidateUrls) {
+      try {
+        const response = await fetch(candidateUrl, {
+          ...init,
+          headers: {
+            ...init.headers,
+            Host: new URL(currentUrl).host,
+          },
+          redirect: 'manual',
+        });
 
-    if (isRedirect) {
-      if (redirectsCount >= maxRedirects) {
-        throw new SsrfValidationError(`Too many redirects (exceeded limit of ${maxRedirects})`, currentUrl, 'MAX_REDIRECTS_EXCEEDED');
+        const isRedirect = [301, 302, 303, 307, 308].includes(response.status);
+
+        if (isRedirect) {
+          if (redirectsCount >= maxRedirects) {
+            throw new SsrfValidationError(`Too many redirects (exceeded limit of ${maxRedirects})`, currentUrl, 'MAX_REDIRECTS_EXCEEDED');
+          }
+
+          const location = response.headers.get('location');
+          if (!location) {
+            throw new SsrfValidationError('Redirect response missing Location header', currentUrl, 'MISSING_REDIRECT_LOCATION');
+          }
+
+          const nextUrl = new URL(location, currentUrl).toString();
+          currentUrl = nextUrl;
+          redirectsCount++;
+          break;
+        }
+
+        return response;
+      } catch (error) {
+        lastError = error;
       }
-
-      const location = response.headers.get('location');
-      if (!location) {
-        throw new SsrfValidationError('Redirect response missing Location header', currentUrl, 'MISSING_REDIRECT_LOCATION');
-      }
-
-      // Resolve relative redirect against current URL
-      const nextUrl = new URL(location, currentUrl).toString();
-      currentUrl = nextUrl;
-      redirectsCount++;
-      continue;
     }
 
-    return response;
+    if (lastError) {
+      throw lastError;
+    }
+
+    break;
   }
+
+  return await fetch(currentUrl, {
+    ...init,
+    redirect: 'manual',
+  });
 }
