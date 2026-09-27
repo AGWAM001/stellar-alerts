@@ -24,6 +24,8 @@ model User {
   deliveryAttempts NotificationDeliveryAttempt[]
   deadLetters        DeadLetter[]
   mfaRecoveryCodes   MfaRecoveryCode[]
+  notificationDeliveries NotificationDelivery[]
+  refreshSessions        RefreshSession[]
 }
 
 model Wallet {
@@ -69,6 +71,7 @@ model Payment {
   createdAt   DateTime @default(now())
   deliveryAttempts NotificationDeliveryAttempt[]
   deadLetters       DeadLetter[]
+  deliveries        NotificationDelivery[]
 
   @@index([txHash])
   @@index([receivedAt])
@@ -456,23 +459,53 @@ model SecurityAuditLog {
 //
 // Idempotency rule: a delivery is NEVER dispatched twice while an earlier
 // attempt for the same `deliveryKey` is in `delivered` state.
+model NotificationDelivery {
+  id             String                        @id @default(cuid())
+  deliveryKey    String                        @unique
+  paymentId      String
+  payment        Payment                       @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  channel        String
+  destination    String
+  userId         String?
+  user           User?                         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  status         String                        @default("pending")
+  currentAttempt Int                           @default(0)
+  maxAttempts    Int                           @default(5)
+  lastError      String?
+  deliveredAt    DateTime?
+  terminalAt     DateTime?
+  createdAt      DateTime                      @default(now())
+  updatedAt      DateTime                      @updatedAt
+  attempts       NotificationDeliveryAttempt[]
+
+  @@unique([paymentId, channel, destination])
+  @@index([status])
+  @@index([channel])
+  @@index([userId])
+  @@index([createdAt])
+}
+
 model NotificationDeliveryAttempt {
-  id                String   @id @default(cuid())
+  id                String                @id @default(cuid())
   deliveryKey       String
+  deliveryId        String?
+  delivery          NotificationDelivery? @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
   paymentId         String?
-  payment           Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  payment           Payment?              @relation(fields: [paymentId], references: [id], onDelete: SetNull)
   channel           String
   destination       String?
   providerRequestId String?
-  status            String   @default("pending") // pending | delivered | failed | skipped | suppressed
-  attempt           Int      @default(1)
+  status            String                @default("pending") // pending | delivered | failed | skipped | suppressed
+  attempt           Int                   @default(1)
   error             String?
   userId            String?
-  user              User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  user              User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
 
+  @@unique([deliveryKey, attempt])
   @@index([deliveryKey])
+  @@index([deliveryId])
   @@index([channel])
   @@index([status])
   @@index([paymentId])
@@ -540,3 +573,44 @@ model MfaRecoveryCode {
   @@index([userId])
   @@index([codeHash])
 }
+
+// ── Refresh Token Rotation & Reuse Detection (#320) ──────────────────────────
+//
+// Token families with single-use refresh token rotation and breach detection.
+// If a previously consumed refresh token is presented, the entire family is revoked.
+model RefreshSession {
+  id               String                 @id @default(cuid())
+  familyId         String                 @unique
+  userId           String
+  user             User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentJti       String                 @unique
+  rotationCounter  Int                    @default(1)
+  isRevoked        Boolean                @default(false)
+  revocationReason String?
+  expiresAt        DateTime
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  history          RefreshTokenHistory[]
+
+  @@index([userId])
+  @@index([currentJti])
+  @@index([isRevoked])
+  @@index([expiresAt])
+}
+
+model RefreshTokenHistory {
+  id              String         @id @default(cuid())
+  familyId        String
+  family          RefreshSession @relation(fields: [familyId], references: [familyId], onDelete: Cascade)
+  jti             String         @unique
+  userId          String
+  rotationCounter Int
+  isConsumed      Boolean        @default(false)
+  consumedAt      DateTime?
+  createdAt       DateTime       @default(now())
+
+  @@index([familyId])
+  @@index([jti])
+  @@index([userId])
+}
+
