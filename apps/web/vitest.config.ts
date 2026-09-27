@@ -16,6 +16,11 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
-    include: ['src/**/*.test.tsx'],
+    include: ['src/**/*.test.tsx', 'src/**/*.test.ts'],
+    environmentMatchGlobs: [
+      // Proxy/middleware tests run in Node — they use Buffer, crypto, and
+      // import from next/server which is mocked in the test file itself.
+      ['src/app/__tests__/proxy.test.ts', 'node'],
+    ],
   },
 });

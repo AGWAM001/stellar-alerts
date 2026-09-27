@@ -10,6 +10,10 @@ import { authRoutes } from './modules/auth/auth.routes';
 import { walletsRoutes } from './modules/wallets/wallets.routes';
 import { paymentsRoutes } from './modules/payments/payments.routes';
 import { webhooksRoutes } from './modules/webhooks/webhooks.routes';
+import { accountRoutes } from './modules/account/account.routes';
+import { registerSecurityHeaders } from './middleware/security.middleware';
+import { registerCorrelation } from './middleware/correlation.middleware';
+import { registerIdempotency } from './middleware/idempotency.middleware';
 import { openApiOptions } from './openapi.config';
 
 export { openApiComponentSchemas, openApiOptions } from './openapi.config';
@@ -20,9 +24,13 @@ export const buildApp = async () => {
     pluginTimeout: 30000,
   });
 
+  // ── Security & observability hooks (registered before routes) ────────────
+  await registerSecurityHeaders(app);
+  await registerCorrelation(app);
+  await registerIdempotency(app);
+
   await app.register(cors, {
     origin: true // Allow all origins for dev, or specify 'http://localhost:3000'
-
   });
 
   await app.register(rateLimit, {
@@ -48,6 +56,7 @@ export const buildApp = async () => {
   app.register(walletsRoutes);
   app.register(paymentsRoutes);
   app.register(webhooksRoutes);
+  app.register(accountRoutes);
 
   return app;
 };

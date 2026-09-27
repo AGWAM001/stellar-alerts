@@ -27,6 +27,9 @@ jobs:
       - name: Verify generated OpenAPI types are up to date
         run: npm run generate:types:check
 
+      - name: Check Prisma migration and generated-client drift
+        run: npx tsx scripts/check-prisma-drift.ts
+
       - name: Build Shared Package (@stellar-alerts/shared)
         run: npx tsc -p packages/shared/tsconfig.json
 
