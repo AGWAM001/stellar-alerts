@@ -58,6 +58,11 @@ jobs:
       - name: Verify generated OpenAPI types are up to date
         run: npm run generate:types:check
 
+      # scripts/**/*.test.ts: changelog generation (see docs/CHANGELOG_AUTOMATION.md)
+      # and migration verification. Node only, so no services are needed.
+      - name: Run Repository Script Tests
+        run: npm run test:scripts
+
       - name: Build Shared Package (@stellar-alerts/shared)
         run: npx tsc -p packages/shared/tsconfig.json
 
