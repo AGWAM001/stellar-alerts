@@ -43,6 +43,21 @@ export type Payment = Prisma.PaymentModel
  */
 export type NotificationPreference = Prisma.NotificationPreferenceModel
 /**
+ * Model AlertRule
+ * 
+ */
+export type AlertRule = Prisma.AlertRuleModel
+/**
+ * Model AlertRuleDispatchLog
+ * 
+ */
+export type AlertRuleDispatchLog = Prisma.AlertRuleDispatchLogModel
+/**
+ * Model WhatsAppDeliveryLog
+ * 
+ */
+export type WhatsAppDeliveryLog = Prisma.WhatsAppDeliveryLogModel
+/**
  * Model Webhook
  * 
  */
@@ -63,10 +78,25 @@ export type WebhookCircuitBreaker = Prisma.WebhookCircuitBreakerModel
  */
 export type SorobanEventSnapshot = Prisma.SorobanEventSnapshotModel
 /**
+ * Model SorobanStateAudit
+ * 
+ */
+export type SorobanStateAudit = Prisma.SorobanStateAuditModel
+/**
  * Model SorobanContractSubscription
  * 
  */
 export type SorobanContractSubscription = Prisma.SorobanContractSubscriptionModel
+/**
+ * Model SacTokenMintBurnEvent
+ * 
+ */
+export type SacTokenMintBurnEvent = Prisma.SacTokenMintBurnEventModel
+/**
+ * Model SacTokenSupply
+ * 
+ */
+export type SacTokenSupply = Prisma.SacTokenSupplyModel
 /**
  * Model MultisigTreasury
  * 
@@ -93,7 +123,52 @@ export type AnchorTransactionWatch = Prisma.AnchorTransactionWatchModel
  */
 export type DexSwapWatch = Prisma.DexSwapWatchModel
 /**
+ * Model SorobanTopicIndex
+ * 
+ */
+export type SorobanTopicIndex = Prisma.SorobanTopicIndexModel
+/**
+ * Model SorobanTopicIndexCursor
+ * 
+ */
+export type SorobanTopicIndexCursor = Prisma.SorobanTopicIndexCursorModel
+/**
  * Model DexSwapEvent
  * 
  */
 export type DexSwapEvent = Prisma.DexSwapEventModel
+/**
+ * Model SecurityAuditLog
+ * 
+ */
+export type SecurityAuditLog = Prisma.SecurityAuditLogModel
+/**
+ * Model NotificationDelivery
+ * 
+ */
+export type NotificationDelivery = Prisma.NotificationDeliveryModel
+/**
+ * Model NotificationDeliveryAttempt
+ * 
+ */
+export type NotificationDeliveryAttempt = Prisma.NotificationDeliveryAttemptModel
+/**
+ * Model DeadLetter
+ * 
+ */
+export type DeadLetter = Prisma.DeadLetterModel
+/**
+ * Model DeadLetterAudit
+ * 
+ */
+export type DeadLetterAudit = Prisma.DeadLetterAuditModel
+/**
+ * Model RefreshSession
+ * 
+ */
+export type RefreshSession = Prisma.RefreshSessionModel
+/**
+ * Model RefreshTokenHistory
+ * 
+ */
+export type RefreshTokenHistory = Prisma.RefreshTokenHistoryModel

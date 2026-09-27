@@ -22,5 +22,6 @@ export default defineConfig({
       // import from next/server which is mocked in the test file itself.
       ['src/app/__tests__/proxy.test.ts', 'node'],
     ],
+    include: ['src/**/*.test.{ts,tsx}'],
   },
 });

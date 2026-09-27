@@ -2,6 +2,12 @@ import crypto from 'crypto';
 import type Redis from 'ioredis';
 import { redis } from '../lib/redis';
 import { checkAndStoreNonce, generateNonce } from '../lib/nonceCache';
+import {
+  createKmsWebhookSigner,
+  KmsHmacClient,
+  KmsProvider,
+  KmsWebhookSigner,
+} from './kms-signer';
 
 export interface WebhookHeaderResult {
   signature: string;
@@ -13,8 +19,25 @@ export interface WebhookHeaderResult {
 export interface VerifyWebhookOptions {
   toleranceMs?: number;
   nonce?: string;
+  secondaryHeaderValue?: string;
   checkReplay?: boolean;
   redisClient?: Redis;
+  kmsSigner?: KmsWebhookSigner;
+}
+
+export interface SignWebhookPayloadOptions {
+  secret?: string;
+  timestamp?: number;
+  nonce?: string;
+  kmsSigner?: KmsWebhookSigner;
+  kmsKeyId?: string;
+}
+
+export interface KmsWebhookSigningEnv {
+  enabled: boolean;
+  provider?: KmsProvider;
+  primaryKeyId?: string;
+  previousKeyIds?: string[];
 }
 
 export interface ParsedWebhookHeader {
@@ -37,6 +60,8 @@ export const MAX_WEBHOOK_PAYLOAD_LENGTH = 1024 * 1024;
 const SIGNATURE_HEX_REGEX = /^[0-9a-fA-F]{64}$/;
 const CONTROL_CHAR_REGEX = /[\u0000-\u001F\u007F]/;
 const MAX_NONCE_LENGTH = 128;
+export const DEFAULT_KEY_ROTATION_GRACE_PERIOD_MS = 48 * 60 * 60 * 1000; // 48 hours
+export const SECONDARY_SIGNATURE_HEADER = 'X-Signature-Secondary';
 
 function normalizePayload(payload: unknown): string {
   if (payload === null || payload === undefined) {
@@ -214,6 +239,74 @@ function verifyParsedSignature(
   return false;
 }
 
+function verifyParsedSignatureSet(
+  payload: string,
+  primaryParsed: ParsedWebhookHeader,
+  secondaryParsed: ParsedWebhookHeader | null,
+  secret: string,
+  toleranceMs: number,
+  nonceOverride?: string
+): ParsedWebhookHeader | null {
+  if (verifyParsedSignature(payload, primaryParsed, secret, toleranceMs, nonceOverride)) {
+    return primaryParsed;
+  }
+
+  if (secondaryParsed !== null && verifyParsedSignature(payload, secondaryParsed, secret, toleranceMs, nonceOverride)) {
+    return secondaryParsed;
+  }
+
+  return null;
+}
+
+async function verifyParsedSignatureKms(
+  payload: string,
+  parsed: ParsedWebhookHeader,
+  kmsSigner: KmsWebhookSigner,
+  toleranceMs: number,
+  nonceOverride?: string
+): Promise<boolean> {
+  const nonce = parsed.nonce || nonceOverride || '';
+
+  if (Math.abs(Date.now() - parsed.timestamp) > toleranceMs) {
+    return false;
+  }
+
+  const dataToSign = buildWebhookDataToSign(payload, parsed.timestamp, nonce);
+  const isValid = await kmsSigner.verifyHmacSha256(dataToSign, parsed.signature);
+  if (isValid) {
+    return true;
+  }
+
+  if (!parsed.nonce && !nonceOverride) {
+    const legacyDataToSign = buildWebhookDataToSign(payload, parsed.timestamp, '');
+    return kmsSigner.verifyHmacSha256(legacyDataToSign, parsed.signature);
+  }
+
+  return false;
+}
+
+async function verifyParsedSignatureSetKms(
+  payload: string,
+  primaryParsed: ParsedWebhookHeader,
+  secondaryParsed: ParsedWebhookHeader | null,
+  kmsSigner: KmsWebhookSigner,
+  toleranceMs: number,
+  nonceOverride?: string
+): Promise<ParsedWebhookHeader | null> {
+  if (await verifyParsedSignatureKms(payload, primaryParsed, kmsSigner, toleranceMs, nonceOverride)) {
+    return primaryParsed;
+  }
+
+  if (
+    secondaryParsed !== null &&
+    (await verifyParsedSignatureKms(payload, secondaryParsed, kmsSigner, toleranceMs, nonceOverride))
+  ) {
+    return secondaryParsed;
+  }
+
+  return null;
+}
+
 /**
  * Evaluates webhook verification and maps the outcome to an HTTP status code.
  * Malformed headers -> 400, invalid signatures -> 401, valid -> 200.
@@ -244,19 +337,94 @@ export function evaluateWebhookVerification(
       : (optionsOrTolerance ?? {});
 
   const toleranceMs = options.toleranceMs ?? DEFAULT_DRIFT_TOLERANCE_MS;
-  const isValid = verifyParsedSignature(
+  let secondaryParsed: ParsedWebhookHeader | null = null;
+  if (options.secondaryHeaderValue) {
+    const secondaryParseResult = parseWebhookSignatureHeader(options.secondaryHeaderValue);
+    if (secondaryParseResult.ok) {
+      secondaryParsed = secondaryParseResult.parsed;
+    }
+  }
+
+  const verifiedParsed = verifyParsedSignatureSet(
     payloadResult.payload,
     parseResult.parsed,
+    secondaryParsed,
     secret,
     toleranceMs,
     options.nonce
   );
 
-  if (!isValid) {
+  if (!verifiedParsed) {
     return { status: 401, valid: false, error: 'Invalid webhook signature' };
   }
 
   return { status: 200, valid: true };
+}
+
+let configuredKmsSigner: KmsWebhookSigner | null = null;
+
+export function buildWebhookDataToSign(
+  payload: string,
+  timestamp: number,
+  nonce: string
+): string {
+  return nonce ? `${timestamp}.${nonce}.${payload}` : `${timestamp}.${payload}`;
+}
+
+export function buildWebhookHeaderValue(
+  timestamp: number,
+  nonce: string,
+  signature: string
+): string {
+  return nonce
+    ? `t=${timestamp},n=${nonce},v1=${signature}`
+    : `t=${timestamp},v1=${signature}`;
+}
+
+export function parseKmsWebhookSigningEnv(env: NodeJS.ProcessEnv = process.env): KmsWebhookSigningEnv {
+  const enabled = env.KMS_WEBHOOK_SIGNING_ENABLED === 'true';
+  const previousKeyIds = env.KMS_PREVIOUS_KEY_IDS
+    ? env.KMS_PREVIOUS_KEY_IDS.split(',').map((keyId) => keyId.trim()).filter(Boolean)
+    : [];
+
+  return {
+    enabled,
+    provider: env.KMS_PROVIDER as KmsProvider | undefined,
+    primaryKeyId: env.KMS_PRIMARY_KEY_ID,
+    previousKeyIds,
+  };
+}
+
+export function configureKmsWebhookSigner(
+  client: KmsHmacClient,
+  env: NodeJS.ProcessEnv = process.env
+): KmsWebhookSigner | null {
+  const kmsEnv = parseKmsWebhookSigningEnv(env);
+  if (!kmsEnv.enabled || !kmsEnv.provider || !kmsEnv.primaryKeyId) {
+    configuredKmsSigner = null;
+    return null;
+  }
+
+  configuredKmsSigner = createKmsWebhookSigner({
+    provider: kmsEnv.provider,
+    primaryKeyId: kmsEnv.primaryKeyId,
+    previousKeyIds: kmsEnv.previousKeyIds,
+    client,
+  });
+
+  return configuredKmsSigner;
+}
+
+export function getConfiguredKmsWebhookSigner(): KmsWebhookSigner | null {
+  return configuredKmsSigner;
+}
+
+export function resetConfiguredKmsWebhookSigner(): void {
+  configuredKmsSigner = null;
+}
+
+function computeLocalHmacSignature(dataToSign: string, secret: string): string {
+  return crypto.createHmac('sha256', secret).update(dataToSign).digest('hex');
 }
 
 /**
@@ -274,12 +442,9 @@ export function generateWebhookSignature(
   timestamp: number = Date.now(),
   nonce: string = generateNonce()
 ): WebhookHeaderResult {
-  const hmac = crypto.createHmac('sha256', secret);
-  const dataToSign = nonce ? `${timestamp}.${nonce}.${payload}` : `${timestamp}.${payload}`;
-  const signature = hmac.update(dataToSign).digest('hex');
-  const headerValue = nonce
-    ? `t=${timestamp},n=${nonce},v1=${signature}`
-    : `t=${timestamp},v1=${signature}`;
+  const dataToSign = buildWebhookDataToSign(payload, timestamp, nonce);
+  const signature = computeLocalHmacSignature(dataToSign, secret);
+  const headerValue = buildWebhookHeaderValue(timestamp, nonce, signature);
 
   return {
     signature,
@@ -287,6 +452,140 @@ export function generateWebhookSignature(
     nonce,
     headerValue,
   };
+}
+
+/**
+ * Generates a webhook signature using a hardware-backed KMS/HSM key.
+ * The raw signing key never enters application memory.
+ */
+export async function generateWebhookSignatureKms(
+  payload: string,
+  kmsSigner: KmsWebhookSigner,
+  timestamp: number = Date.now(),
+  nonce: string = generateNonce()
+): Promise<WebhookHeaderResult> {
+  const dataToSign = buildWebhookDataToSign(payload, timestamp, nonce);
+  const signature = await kmsSigner.signHmacSha256(dataToSign);
+  const headerValue = buildWebhookHeaderValue(timestamp, nonce, signature);
+
+  return {
+    signature,
+    timestamp,
+    nonce,
+    headerValue,
+  };
+}
+
+export interface KeyRotationManagerOptions {
+  gracePeriodMs?: number;
+  now?: () => number;
+}
+
+export interface KeyRotationSignResult extends WebhookHeaderResult {
+  secondarySignature: string | null;
+  secondaryHeaderValue: string | null;
+}
+
+export class KeyRotationManager {
+  private primarySecret: string;
+  private secondarySecret: string | null = null;
+  private rotatedAt: number | null = null;
+  private readonly gracePeriodMs: number;
+  private readonly now: () => number;
+
+  constructor(primarySecret: string, options: KeyRotationManagerOptions = {}) {
+    if (!primarySecret) {
+      throw new Error('KeyRotationManager requires a primary secret');
+    }
+    this.primarySecret = primarySecret;
+    this.gracePeriodMs = options.gracePeriodMs ?? DEFAULT_KEY_ROTATION_GRACE_PERIOD_MS;
+    this.now = options.now ?? (() => Date.now());
+  }
+
+  rotateSecret(newSecret: string): void {
+    if (!newSecret) {
+      throw new Error('New secret is required for key rotation');
+    }
+    if (newSecret === this.primarySecret) {
+      return;
+    }
+    this.secondarySecret = this.primarySecret;
+    this.primarySecret = newSecret;
+    this.rotatedAt = this.now();
+  }
+
+  rotate(newSecret: string): void {
+    this.rotateSecret(newSecret);
+  }
+
+  getPrimarySecret(): string {
+    return this.primarySecret;
+  }
+
+  getSecondarySecret(): string | null {
+    if (this.secondarySecret === null || this.rotatedAt === null) {
+      return null;
+    }
+    return this.now() - this.rotatedAt <= this.gracePeriodMs ? this.secondarySecret : null;
+  }
+
+  sign(
+    payload: string,
+    timestamp: number = Date.now(),
+    nonce: string = generateNonce()
+  ): KeyRotationSignResult {
+    const primary = generateWebhookSignature(payload, this.primarySecret, timestamp, nonce);
+    const secondarySecret = this.getSecondarySecret();
+    const secondary = secondarySecret
+      ? generateWebhookSignature(payload, secondarySecret, timestamp, nonce)
+      : null;
+
+    return {
+      signature: primary.signature,
+      timestamp: primary.timestamp,
+      nonce: primary.nonce,
+      headerValue: primary.headerValue,
+      secondarySignature: secondary?.signature ?? null,
+      secondaryHeaderValue: secondary?.headerValue ?? null,
+    };
+  }
+
+  signHeaders(
+    payload: string,
+    timestamp: number = Date.now(),
+    nonce: string = generateNonce()
+  ): Record<string, string> {
+    const signed = this.sign(payload, timestamp, nonce);
+    const headers: Record<string, string> = {
+      'X-Stellar-Signature': signed.headerValue,
+    };
+    if (signed.secondaryHeaderValue) {
+      headers[SECONDARY_SIGNATURE_HEADER] = signed.secondaryHeaderValue;
+    }
+    return headers;
+  }
+}
+
+/**
+ * Signs a webhook payload using KMS when configured, otherwise falls back to the local secret.
+ */
+export async function signWebhookPayload(
+  payload: string,
+  options: SignWebhookPayloadOptions = {}
+): Promise<WebhookHeaderResult> {
+  const timestamp = options.timestamp ?? Date.now();
+  const nonce = options.nonce ?? generateNonce();
+  const kmsSigner = options.kmsSigner ?? configuredKmsSigner;
+
+  if (kmsSigner) {
+    return generateWebhookSignatureKms(payload, kmsSigner, timestamp, nonce);
+  }
+
+  if (!options.secret) {
+    throw new Error('Webhook signing secret is required when KMS signing is disabled');
+  }
+
+  return generateWebhookSignature(payload, options.secret, timestamp, nonce);
 }
 
 /**
@@ -316,6 +615,7 @@ export async function verifyWebhookSignature(
     const toleranceMs = options.toleranceMs ?? DEFAULT_DRIFT_TOLERANCE_MS;
     const checkReplay = options.checkReplay ?? true;
     const redisClient = options.redisClient ?? redis;
+    const kmsSigner = options.kmsSigner ?? configuredKmsSigner;
 
     const payloadResult = validatePayload(payload);
     if (!payloadResult.ok) {
@@ -327,19 +627,39 @@ export async function verifyWebhookSignature(
       return false;
     }
 
-    const isValid = verifyParsedSignature(
+    let secondaryParsed: ParsedWebhookHeader | null = null;
+    if (options.secondaryHeaderValue) {
+      const secondaryParseResult = parseWebhookSignatureHeader(options.secondaryHeaderValue);
+      if (secondaryParseResult.ok) {
+        secondaryParsed = secondaryParseResult.parsed;
+      }
+    }
+
+    let verifiedParsed = verifyParsedSignatureSet(
       payloadResult.payload,
       parseResult.parsed,
+      secondaryParsed,
       secret,
       toleranceMs,
       options.nonce
     );
 
-    if (!isValid) {
+    if (!verifiedParsed && kmsSigner) {
+      verifiedParsed = await verifyParsedSignatureSetKms(
+        payloadResult.payload,
+        parseResult.parsed,
+        secondaryParsed,
+        kmsSigner,
+        toleranceMs,
+        options.nonce
+      );
+    }
+
+    if (verifiedParsed === null) {
       return false;
     }
 
-    const nonce = parseResult.parsed.nonce || options.nonce || '';
+    const nonce = verifiedParsed.nonce || options.nonce || '';
     if (nonce && checkReplay) {
       const ttlSeconds = Math.max(1, Math.ceil(toleranceMs / 1000));
       const isFresh = await checkAndStoreNonce(nonce, ttlSeconds, redisClient);
@@ -362,7 +682,8 @@ export function verifyWebhookSignatureSync(
   headerValue: string,
   secret: string,
   toleranceMs: number = DEFAULT_DRIFT_TOLERANCE_MS,
-  nonceOverride?: string
+  nonceOverride?: string,
+  secondaryHeaderValue?: string
 ): boolean {
   try {
     const payloadResult = validatePayload(payload);
@@ -375,13 +696,22 @@ export function verifyWebhookSignatureSync(
       return false;
     }
 
-    return verifyParsedSignature(
+    let secondaryParsed: ParsedWebhookHeader | null = null;
+    if (secondaryHeaderValue) {
+      const secondaryParseResult = parseWebhookSignatureHeader(secondaryHeaderValue);
+      if (secondaryParseResult.ok) {
+        secondaryParsed = secondaryParseResult.parsed;
+      }
+    }
+
+    return verifyParsedSignatureSet(
       payloadResult.payload,
       parseResult.parsed,
+      secondaryParsed,
       secret,
       toleranceMs,
       nonceOverride
-    );
+    ) !== null;
   } catch {
     return false;
   }
