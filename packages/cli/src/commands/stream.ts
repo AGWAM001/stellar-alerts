@@ -1,7 +1,8 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { apiClient } from '../lib/api.js';
+import { ApiClient } from '../lib/api.js';
 import { PaymentDTO } from '../lib/types.js';
+import { resolveAuth } from '../lib/auth.js';
 import { CursorStore, defaultCursorFile } from '../lib/cursor-store.js';
 import { runResilientStream } from '../lib/resilient-stream.js';
 
@@ -66,7 +67,7 @@ export function registerStreamCommands(program: Command): void {
     .command('watch')
     .description('Watch real-time payment feed')
     .option('-w, --wallet <walletId>', 'Filter by specific wallet ID')
-    .option('-t, --token <token>', 'API authentication token')
+    .option('-t, --token <token>', 'API authentication token (overrides profile)')
     .option('--no-color', 'Disable colored output')
     .option('--cursor <token>', 'Resume after this cursor ("now" = live tail, ignore saved cursor)')
     .option('--cursor-file <path>', 'Where the resume cursor is stored (default: ~/.stellar-alerts/stream-cursor[-<wallet>].json)')
@@ -74,9 +75,8 @@ export function registerStreamCommands(program: Command): void {
     .option('--max-retries <number>', 'Consecutive reconnect attempts before giving up (default: unlimited)')
     .option('--max-backoff <ms>', 'Upper bound for the reconnect delay in milliseconds', '60000')
     .action(async (options: WatchOptions) => {
-      if (options.token) {
-        apiClient['apiKey'] = options.token;
-      }
+      const auth = resolveAuth(options.token, program.opts().apiUrl);
+      const client = new ApiClient(auth.apiUrl, auth.token);
 
       const maxRetries = parseNonNegativeInt(options.maxRetries, '--max-retries');
       const maxDelayMs = parseNonNegativeInt(options.maxBackoff, '--max-backoff');
@@ -107,7 +107,7 @@ export function registerStreamCommands(program: Command): void {
       try {
         const result = await runResilientStream({
           connect: (cursor, signal) =>
-            apiClient.openPaymentStream({ cursor: cursor || undefined, walletId: options.wallet, signal }),
+            client.openPaymentStream({ cursor: cursor || undefined, walletId: options.wallet, signal }),
           onPayment: (payment: PaymentDTO) => {
             console.log(formatPayment(payment));
           },
@@ -146,15 +146,14 @@ export function registerStreamCommands(program: Command): void {
     .description('Show recent payment history')
     .option('-w, --wallet <walletId>', 'Filter by specific wallet ID')
     .option('-l, --limit <number>', 'Number of payments to show', '20')
-    .option('-t, --token <token>', 'API authentication token')
+    .option('-t, --token <token>', 'API authentication token (overrides profile)')
     .action(async (options: { wallet?: string; limit?: string; token?: string }) => {
       try {
-        if (options.token) {
-          apiClient['apiKey'] = options.token;
-        }
+        const auth = resolveAuth(options.token, program.opts().apiUrl);
+        const client = new ApiClient(auth.apiUrl, auth.token);
 
         const limit = parseInt(options.limit || '20', 10);
-        const payments = await apiClient.getPayments(options.wallet, limit);
+        const payments = await client.getPayments(options.wallet, limit);
 
         if (payments.length === 0) {
           console.log(chalk.yellow('📭 No payments found.'));
