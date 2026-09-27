@@ -402,6 +402,7 @@ export const ModelName = {
   IngestionCursor: 'IngestionCursor',
   Payment: 'Payment',
   NotificationPreference: 'NotificationPreference',
+  DeliveryLog: 'DeliveryLog',
   AlertRule: 'AlertRule',
   AlertRuleDispatchLog: 'AlertRuleDispatchLog',
   WhatsAppDeliveryLog: 'WhatsAppDeliveryLog',
@@ -444,7 +445,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "wallet" | "ingestionCursor" | "payment" | "notificationPreference" | "alertRule" | "alertRuleDispatchLog" | "whatsAppDeliveryLog" | "webhook" | "webhookLog" | "webhookCircuitBreaker" | "sorobanEventSnapshot" | "sorobanStateAudit" | "sorobanContractSubscription" | "sacTokenMintBurnEvent" | "sacTokenSupply" | "multisigTreasury" | "multisigSignerWatcher" | "pendingMultisigTransaction" | "anchorTransactionWatch" | "dexSwapWatch" | "sorobanTopicIndex" | "sorobanTopicIndexCursor" | "dexSwapEvent" | "securityAuditLog" | "notificationDelivery" | "notificationDeliveryAttempt" | "deadLetter" | "deadLetterAudit" | "mfaRecoveryCode" | "refreshSession" | "refreshTokenHistory"
+    modelProps: "user" | "wallet" | "ingestionCursor" | "payment" | "notificationPreference" | "deliveryLog" | "alertRule" | "alertRuleDispatchLog" | "whatsAppDeliveryLog" | "webhook" | "webhookLog" | "webhookCircuitBreaker" | "sorobanEventSnapshot" | "sorobanStateAudit" | "sorobanContractSubscription" | "sacTokenMintBurnEvent" | "sacTokenSupply" | "multisigTreasury" | "multisigSignerWatcher" | "pendingMultisigTransaction" | "anchorTransactionWatch" | "dexSwapWatch" | "sorobanTopicIndex" | "sorobanTopicIndexCursor" | "dexSwapEvent" | "securityAuditLog" | "notificationDelivery" | "notificationDeliveryAttempt" | "deadLetter" | "deadLetterAudit" | "mfaRecoveryCode" | "refreshSession" | "refreshTokenHistory"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -815,6 +816,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.NotificationPreferenceCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.NotificationPreferenceCountAggregateOutputType> | number
+        }
+      }
+    }
+    DeliveryLog: {
+      payload: Prisma.$DeliveryLogPayload<ExtArgs>
+      fields: Prisma.DeliveryLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DeliveryLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DeliveryLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>
+        }
+        findFirst: {
+          args: Prisma.DeliveryLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DeliveryLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>
+        }
+        findMany: {
+          args: Prisma.DeliveryLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>[]
+        }
+        create: {
+          args: Prisma.DeliveryLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>
+        }
+        createMany: {
+          args: Prisma.DeliveryLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DeliveryLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>[]
+        }
+        delete: {
+          args: Prisma.DeliveryLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>
+        }
+        update: {
+          args: Prisma.DeliveryLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.DeliveryLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DeliveryLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DeliveryLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.DeliveryLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>
+        }
+        aggregate: {
+          args: Prisma.DeliveryLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDeliveryLog>
+        }
+        groupBy: {
+          args: Prisma.DeliveryLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DeliveryLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DeliveryLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DeliveryLogCountAggregateOutputType> | number
         }
       }
     }
@@ -2918,11 +2993,28 @@ export const NotificationPreferenceScalarFieldEnum = {
   emailEnabled: 'emailEnabled',
   whatsappNumber: 'whatsappNumber',
   whatsappEnabled: 'whatsappEnabled',
+  discordWebhookUrl: 'discordWebhookUrl',
+  discordEnabled: 'discordEnabled',
+  slackWebhookUrl: 'slackWebhookUrl',
+  slackEnabled: 'slackEnabled',
   language: 'language',
   filterRules: 'filterRules'
 } as const
 
 export type NotificationPreferenceScalarFieldEnum = (typeof NotificationPreferenceScalarFieldEnum)[keyof typeof NotificationPreferenceScalarFieldEnum]
+
+
+export const DeliveryLogScalarFieldEnum = {
+  id: 'id',
+  paymentId: 'paymentId',
+  channel: 'channel',
+  status: 'status',
+  error: 'error',
+  attempt: 'attempt',
+  createdAt: 'createdAt'
+} as const
+
+export type DeliveryLogScalarFieldEnum = (typeof DeliveryLogScalarFieldEnum)[keyof typeof DeliveryLogScalarFieldEnum]
 
 
 export const AlertRuleScalarFieldEnum = {
@@ -3616,6 +3708,7 @@ export type GlobalOmitConfig = {
   ingestionCursor?: Prisma.IngestionCursorOmit
   payment?: Prisma.PaymentOmit
   notificationPreference?: Prisma.NotificationPreferenceOmit
+  deliveryLog?: Prisma.DeliveryLogOmit
   alertRule?: Prisma.AlertRuleOmit
   alertRuleDispatchLog?: Prisma.AlertRuleDispatchLogOmit
   whatsAppDeliveryLog?: Prisma.WhatsAppDeliveryLogOmit
