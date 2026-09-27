@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { cursorSchema, limitSchema } from '../../utils/pagination';
 
 export const deadLetterIdSchema = z.object({
   id: z.string().min(1),
@@ -9,8 +10,8 @@ export const listDeadLettersQuerySchema = z.object({
   status: z.enum(['pending', 'retried', 'suppressed']).optional(),
   q: z.string().max(200).optional(),
   maxAgeDays: z.coerce.number().int().min(1).max(365).optional(),
-  page: z.coerce.number().int().min(1).max(10000).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  limit: limitSchema,
+  cursor: cursorSchema,
 });
 
 export const suppressDeadLetterSchema = z.object({
