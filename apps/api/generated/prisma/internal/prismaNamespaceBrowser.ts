@@ -57,6 +57,8 @@ export const ModelName = {
   Payment: 'Payment',
   NotificationPreference: 'NotificationPreference',
   DeliveryLog: 'DeliveryLog',
+  PaymentChecksum: 'PaymentChecksum',
+  DailyChecksumRoot: 'DailyChecksumRoot',
   AlertRule: 'AlertRule',
   AlertRuleDispatchLog: 'AlertRuleDispatchLog',
   WhatsAppDeliveryLog: 'WhatsAppDeliveryLog',
@@ -187,6 +189,30 @@ export const DeliveryLogScalarFieldEnum = {
 } as const
 
 export type DeliveryLogScalarFieldEnum = (typeof DeliveryLogScalarFieldEnum)[keyof typeof DeliveryLogScalarFieldEnum]
+
+
+export const PaymentChecksumScalarFieldEnum = {
+  id: 'id',
+  paymentId: 'paymentId',
+  sequence: 'sequence',
+  payloadHash: 'payloadHash',
+  previousHash: 'previousHash',
+  chainHash: 'chainHash',
+  createdAt: 'createdAt'
+} as const
+
+export type PaymentChecksumScalarFieldEnum = (typeof PaymentChecksumScalarFieldEnum)[keyof typeof PaymentChecksumScalarFieldEnum]
+
+
+export const DailyChecksumRootScalarFieldEnum = {
+  id: 'id',
+  date: 'date',
+  merkleRoot: 'merkleRoot',
+  leafCount: 'leafCount',
+  computedAt: 'computedAt'
+} as const
+
+export type DailyChecksumRootScalarFieldEnum = (typeof DailyChecksumRootScalarFieldEnum)[keyof typeof DailyChecksumRootScalarFieldEnum]
 
 
 export const AlertRuleScalarFieldEnum = {

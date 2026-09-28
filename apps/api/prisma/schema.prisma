@@ -72,6 +72,7 @@ model Payment {
   deliveryAttempts NotificationDeliveryAttempt[]
   deadLetters       DeadLetter[]
   deliveries        NotificationDelivery[]
+  checksum          PaymentChecksum?
 
   @@index([txHash])
   @@index([receivedAt])
@@ -108,6 +109,42 @@ model DeliveryLog {
 
   @@unique([paymentId, channel])
   @@index([paymentId])
+}
+
+// Append-only hash-pointer audit chain over ingested Payment rows (see
+// docs/payment-checksum-chain.md and services/checksumChain.service.ts).
+// Each row's chainHash commits to the previous row's chainHash plus this
+// row's own payloadHash, so altering or deleting any historical Payment or
+// PaymentChecksum row breaks every chainHash computed after it — detectable
+// by walking the chain and recomputing (verifyChain()). Rows are never
+// updated or deleted after insert, only appended.
+model PaymentChecksum {
+  id           String   @id @default(cuid())
+  paymentId    String   @unique
+  payment      Payment  @relation(fields: [paymentId], references: [id])
+  // Append order (NOT Payment.receivedAt, which is on-chain time set by the
+  // Stellar network and can arrive out of order relative to when we
+  // ingested it). The chain follows ingestion order, since that's the only
+  // order this service can itself guarantee monotonicity for.
+  sequence     Int      @default(autoincrement())
+  payloadHash  String
+  previousHash String
+  chainHash    String
+  createdAt    DateTime @default(now())
+
+  @@index([sequence])
+  @@index([createdAt])
+}
+
+// One row per UTC calendar day, committing to every PaymentChecksum
+// appended that day via a Merkle tree over their payloadHashes (see
+// services/checksumChain.service.ts computeDailyMerkleRoot()).
+model DailyChecksumRoot {
+  id         String   @id @default(cuid())
+  date       String   @unique // UTC day, "YYYY-MM-DD"
+  merkleRoot String
+  leafCount  Int
+  computedAt DateTime @default(now())
 }
 
 // A persisted, user-authored rule that gates payment alert dispatch. Distinct
