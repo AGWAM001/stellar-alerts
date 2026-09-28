@@ -403,6 +403,8 @@ export const ModelName = {
   Payment: 'Payment',
   NotificationPreference: 'NotificationPreference',
   DeliveryLog: 'DeliveryLog',
+  PaymentChecksum: 'PaymentChecksum',
+  DailyChecksumRoot: 'DailyChecksumRoot',
   AlertRule: 'AlertRule',
   AlertRuleDispatchLog: 'AlertRuleDispatchLog',
   WhatsAppDeliveryLog: 'WhatsAppDeliveryLog',
@@ -445,7 +447,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "wallet" | "ingestionCursor" | "payment" | "notificationPreference" | "deliveryLog" | "alertRule" | "alertRuleDispatchLog" | "whatsAppDeliveryLog" | "webhook" | "webhookLog" | "webhookCircuitBreaker" | "sorobanEventSnapshot" | "sorobanStateAudit" | "sorobanContractSubscription" | "sacTokenMintBurnEvent" | "sacTokenSupply" | "multisigTreasury" | "multisigSignerWatcher" | "pendingMultisigTransaction" | "anchorTransactionWatch" | "dexSwapWatch" | "sorobanTopicIndex" | "sorobanTopicIndexCursor" | "dexSwapEvent" | "securityAuditLog" | "notificationDelivery" | "notificationDeliveryAttempt" | "deadLetter" | "deadLetterAudit" | "mfaRecoveryCode" | "refreshSession" | "refreshTokenHistory"
+    modelProps: "user" | "wallet" | "ingestionCursor" | "payment" | "notificationPreference" | "deliveryLog" | "paymentChecksum" | "dailyChecksumRoot" | "alertRule" | "alertRuleDispatchLog" | "whatsAppDeliveryLog" | "webhook" | "webhookLog" | "webhookCircuitBreaker" | "sorobanEventSnapshot" | "sorobanStateAudit" | "sorobanContractSubscription" | "sacTokenMintBurnEvent" | "sacTokenSupply" | "multisigTreasury" | "multisigSignerWatcher" | "pendingMultisigTransaction" | "anchorTransactionWatch" | "dexSwapWatch" | "sorobanTopicIndex" | "sorobanTopicIndexCursor" | "dexSwapEvent" | "securityAuditLog" | "notificationDelivery" | "notificationDeliveryAttempt" | "deadLetter" | "deadLetterAudit" | "mfaRecoveryCode" | "refreshSession" | "refreshTokenHistory"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -890,6 +892,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.DeliveryLogCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.DeliveryLogCountAggregateOutputType> | number
+        }
+      }
+    }
+    PaymentChecksum: {
+      payload: Prisma.$PaymentChecksumPayload<ExtArgs>
+      fields: Prisma.PaymentChecksumFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PaymentChecksumFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PaymentChecksumFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>
+        }
+        findFirst: {
+          args: Prisma.PaymentChecksumFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PaymentChecksumFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>
+        }
+        findMany: {
+          args: Prisma.PaymentChecksumFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>[]
+        }
+        create: {
+          args: Prisma.PaymentChecksumCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>
+        }
+        createMany: {
+          args: Prisma.PaymentChecksumCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PaymentChecksumCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>[]
+        }
+        delete: {
+          args: Prisma.PaymentChecksumDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>
+        }
+        update: {
+          args: Prisma.PaymentChecksumUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>
+        }
+        deleteMany: {
+          args: Prisma.PaymentChecksumDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PaymentChecksumUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PaymentChecksumUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>[]
+        }
+        upsert: {
+          args: Prisma.PaymentChecksumUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>
+        }
+        aggregate: {
+          args: Prisma.PaymentChecksumAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePaymentChecksum>
+        }
+        groupBy: {
+          args: Prisma.PaymentChecksumGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PaymentChecksumGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PaymentChecksumCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PaymentChecksumCountAggregateOutputType> | number
+        }
+      }
+    }
+    DailyChecksumRoot: {
+      payload: Prisma.$DailyChecksumRootPayload<ExtArgs>
+      fields: Prisma.DailyChecksumRootFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DailyChecksumRootFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DailyChecksumRootFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>
+        }
+        findFirst: {
+          args: Prisma.DailyChecksumRootFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DailyChecksumRootFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>
+        }
+        findMany: {
+          args: Prisma.DailyChecksumRootFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>[]
+        }
+        create: {
+          args: Prisma.DailyChecksumRootCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>
+        }
+        createMany: {
+          args: Prisma.DailyChecksumRootCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DailyChecksumRootCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>[]
+        }
+        delete: {
+          args: Prisma.DailyChecksumRootDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>
+        }
+        update: {
+          args: Prisma.DailyChecksumRootUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>
+        }
+        deleteMany: {
+          args: Prisma.DailyChecksumRootDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DailyChecksumRootUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DailyChecksumRootUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>[]
+        }
+        upsert: {
+          args: Prisma.DailyChecksumRootUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>
+        }
+        aggregate: {
+          args: Prisma.DailyChecksumRootAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDailyChecksumRoot>
+        }
+        groupBy: {
+          args: Prisma.DailyChecksumRootGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DailyChecksumRootGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DailyChecksumRootCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DailyChecksumRootCountAggregateOutputType> | number
         }
       }
     }
@@ -3017,6 +3167,30 @@ export const DeliveryLogScalarFieldEnum = {
 export type DeliveryLogScalarFieldEnum = (typeof DeliveryLogScalarFieldEnum)[keyof typeof DeliveryLogScalarFieldEnum]
 
 
+export const PaymentChecksumScalarFieldEnum = {
+  id: 'id',
+  paymentId: 'paymentId',
+  sequence: 'sequence',
+  payloadHash: 'payloadHash',
+  previousHash: 'previousHash',
+  chainHash: 'chainHash',
+  createdAt: 'createdAt'
+} as const
+
+export type PaymentChecksumScalarFieldEnum = (typeof PaymentChecksumScalarFieldEnum)[keyof typeof PaymentChecksumScalarFieldEnum]
+
+
+export const DailyChecksumRootScalarFieldEnum = {
+  id: 'id',
+  date: 'date',
+  merkleRoot: 'merkleRoot',
+  leafCount: 'leafCount',
+  computedAt: 'computedAt'
+} as const
+
+export type DailyChecksumRootScalarFieldEnum = (typeof DailyChecksumRootScalarFieldEnum)[keyof typeof DailyChecksumRootScalarFieldEnum]
+
+
 export const AlertRuleScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -3709,6 +3883,8 @@ export type GlobalOmitConfig = {
   payment?: Prisma.PaymentOmit
   notificationPreference?: Prisma.NotificationPreferenceOmit
   deliveryLog?: Prisma.DeliveryLogOmit
+  paymentChecksum?: Prisma.PaymentChecksumOmit
+  dailyChecksumRoot?: Prisma.DailyChecksumRootOmit
   alertRule?: Prisma.AlertRuleOmit
   alertRuleDispatchLog?: Prisma.AlertRuleDispatchLogOmit
   whatsAppDeliveryLog?: Prisma.WhatsAppDeliveryLogOmit
