@@ -192,6 +192,7 @@ export type UserWhereInput = {
   alertRules?: Prisma.AlertRuleListRelationFilter
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptListRelationFilter
   deadLetters?: Prisma.DeadLetterListRelationFilter
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayListRelationFilter
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeListRelationFilter
   notificationDeliveries?: Prisma.NotificationDeliveryListRelationFilter
   refreshSessions?: Prisma.RefreshSessionListRelationFilter
@@ -213,6 +214,7 @@ export type UserOrderByWithRelationInput = {
   alertRules?: Prisma.AlertRuleOrderByRelationAggregateInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptOrderByRelationAggregateInput
   deadLetters?: Prisma.DeadLetterOrderByRelationAggregateInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayOrderByRelationAggregateInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeOrderByRelationAggregateInput
   notificationDeliveries?: Prisma.NotificationDeliveryOrderByRelationAggregateInput
   refreshSessions?: Prisma.RefreshSessionOrderByRelationAggregateInput
@@ -237,6 +239,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   alertRules?: Prisma.AlertRuleListRelationFilter
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptListRelationFilter
   deadLetters?: Prisma.DeadLetterListRelationFilter
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayListRelationFilter
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeListRelationFilter
   notificationDeliveries?: Prisma.NotificationDeliveryListRelationFilter
   refreshSessions?: Prisma.RefreshSessionListRelationFilter
@@ -280,6 +283,7 @@ export type UserCreateInput = {
   alertRules?: Prisma.AlertRuleCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionCreateNestedManyWithoutUserInput
@@ -301,6 +305,7 @@ export type UserUncheckedCreateInput = {
   alertRules?: Prisma.AlertRuleUncheckedCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterUncheckedCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionUncheckedCreateNestedManyWithoutUserInput
@@ -322,6 +327,7 @@ export type UserUpdateInput = {
   alertRules?: Prisma.AlertRuleUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUpdateManyWithoutUserNestedInput
@@ -343,6 +349,7 @@ export type UserUncheckedUpdateInput = {
   alertRules?: Prisma.AlertRuleUncheckedUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUncheckedUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -582,6 +589,20 @@ export type UserUpdateOneWithoutDeadLettersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDeadLettersInput, Prisma.UserUpdateWithoutDeadLettersInput>, Prisma.UserUncheckedUpdateWithoutDeadLettersInput>
 }
 
+export type UserCreateNestedOneWithoutWebhookSandboxReplaysInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWebhookSandboxReplaysInput, Prisma.UserUncheckedCreateWithoutWebhookSandboxReplaysInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWebhookSandboxReplaysInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutWebhookSandboxReplaysNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWebhookSandboxReplaysInput, Prisma.UserUncheckedCreateWithoutWebhookSandboxReplaysInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWebhookSandboxReplaysInput
+  upsert?: Prisma.UserUpsertWithoutWebhookSandboxReplaysInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutWebhookSandboxReplaysInput, Prisma.UserUpdateWithoutWebhookSandboxReplaysInput>, Prisma.UserUncheckedUpdateWithoutWebhookSandboxReplaysInput>
+}
+
 export type UserCreateNestedOneWithoutMfaRecoveryCodesInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutMfaRecoveryCodesInput, Prisma.UserUncheckedCreateWithoutMfaRecoveryCodesInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutMfaRecoveryCodesInput
@@ -625,6 +646,7 @@ export type UserCreateWithoutWalletsInput = {
   alertRules?: Prisma.AlertRuleCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionCreateNestedManyWithoutUserInput
@@ -645,6 +667,7 @@ export type UserUncheckedCreateWithoutWalletsInput = {
   alertRules?: Prisma.AlertRuleUncheckedCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterUncheckedCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionUncheckedCreateNestedManyWithoutUserInput
@@ -681,6 +704,7 @@ export type UserUpdateWithoutWalletsInput = {
   alertRules?: Prisma.AlertRuleUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUpdateManyWithoutUserNestedInput
@@ -701,6 +725,7 @@ export type UserUncheckedUpdateWithoutWalletsInput = {
   alertRules?: Prisma.AlertRuleUncheckedUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUncheckedUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -721,6 +746,7 @@ export type UserCreateWithoutNotifyPrefsInput = {
   alertRules?: Prisma.AlertRuleCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionCreateNestedManyWithoutUserInput
@@ -741,6 +767,7 @@ export type UserUncheckedCreateWithoutNotifyPrefsInput = {
   alertRules?: Prisma.AlertRuleUncheckedCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterUncheckedCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionUncheckedCreateNestedManyWithoutUserInput
@@ -777,6 +804,7 @@ export type UserUpdateWithoutNotifyPrefsInput = {
   alertRules?: Prisma.AlertRuleUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUpdateManyWithoutUserNestedInput
@@ -797,6 +825,7 @@ export type UserUncheckedUpdateWithoutNotifyPrefsInput = {
   alertRules?: Prisma.AlertRuleUncheckedUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUncheckedUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -817,6 +846,7 @@ export type UserCreateWithoutAlertRulesInput = {
   dexSwapWatches?: Prisma.DexSwapWatchCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionCreateNestedManyWithoutUserInput
@@ -837,6 +867,7 @@ export type UserUncheckedCreateWithoutAlertRulesInput = {
   dexSwapWatches?: Prisma.DexSwapWatchUncheckedCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterUncheckedCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionUncheckedCreateNestedManyWithoutUserInput
@@ -873,6 +904,7 @@ export type UserUpdateWithoutAlertRulesInput = {
   dexSwapWatches?: Prisma.DexSwapWatchUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUpdateManyWithoutUserNestedInput
@@ -893,6 +925,7 @@ export type UserUncheckedUpdateWithoutAlertRulesInput = {
   dexSwapWatches?: Prisma.DexSwapWatchUncheckedUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUncheckedUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -913,6 +946,7 @@ export type UserCreateWithoutWebhooksInput = {
   alertRules?: Prisma.AlertRuleCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionCreateNestedManyWithoutUserInput
@@ -933,6 +967,7 @@ export type UserUncheckedCreateWithoutWebhooksInput = {
   alertRules?: Prisma.AlertRuleUncheckedCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterUncheckedCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionUncheckedCreateNestedManyWithoutUserInput
@@ -969,6 +1004,7 @@ export type UserUpdateWithoutWebhooksInput = {
   alertRules?: Prisma.AlertRuleUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUpdateManyWithoutUserNestedInput
@@ -989,6 +1025,7 @@ export type UserUncheckedUpdateWithoutWebhooksInput = {
   alertRules?: Prisma.AlertRuleUncheckedUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUncheckedUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -1009,6 +1046,7 @@ export type UserCreateWithoutSorobanSubscriptionsInput = {
   alertRules?: Prisma.AlertRuleCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionCreateNestedManyWithoutUserInput
@@ -1029,6 +1067,7 @@ export type UserUncheckedCreateWithoutSorobanSubscriptionsInput = {
   alertRules?: Prisma.AlertRuleUncheckedCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterUncheckedCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionUncheckedCreateNestedManyWithoutUserInput
@@ -1065,6 +1104,7 @@ export type UserUpdateWithoutSorobanSubscriptionsInput = {
   alertRules?: Prisma.AlertRuleUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUpdateManyWithoutUserNestedInput
@@ -1085,6 +1125,7 @@ export type UserUncheckedUpdateWithoutSorobanSubscriptionsInput = {
   alertRules?: Prisma.AlertRuleUncheckedUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUncheckedUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -1105,6 +1146,7 @@ export type UserCreateWithoutMultisigSignerWatchesInput = {
   alertRules?: Prisma.AlertRuleCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionCreateNestedManyWithoutUserInput
@@ -1125,6 +1167,7 @@ export type UserUncheckedCreateWithoutMultisigSignerWatchesInput = {
   alertRules?: Prisma.AlertRuleUncheckedCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterUncheckedCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionUncheckedCreateNestedManyWithoutUserInput
@@ -1161,6 +1204,7 @@ export type UserUpdateWithoutMultisigSignerWatchesInput = {
   alertRules?: Prisma.AlertRuleUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUpdateManyWithoutUserNestedInput
@@ -1181,6 +1225,7 @@ export type UserUncheckedUpdateWithoutMultisigSignerWatchesInput = {
   alertRules?: Prisma.AlertRuleUncheckedUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUncheckedUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -1201,6 +1246,7 @@ export type UserCreateWithoutAnchorWatchesInput = {
   alertRules?: Prisma.AlertRuleCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionCreateNestedManyWithoutUserInput
@@ -1221,6 +1267,7 @@ export type UserUncheckedCreateWithoutAnchorWatchesInput = {
   alertRules?: Prisma.AlertRuleUncheckedCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterUncheckedCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionUncheckedCreateNestedManyWithoutUserInput
@@ -1257,6 +1304,7 @@ export type UserUpdateWithoutAnchorWatchesInput = {
   alertRules?: Prisma.AlertRuleUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUpdateManyWithoutUserNestedInput
@@ -1277,6 +1325,7 @@ export type UserUncheckedUpdateWithoutAnchorWatchesInput = {
   alertRules?: Prisma.AlertRuleUncheckedUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUncheckedUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -1297,6 +1346,7 @@ export type UserCreateWithoutDexSwapWatchesInput = {
   alertRules?: Prisma.AlertRuleCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionCreateNestedManyWithoutUserInput
@@ -1317,6 +1367,7 @@ export type UserUncheckedCreateWithoutDexSwapWatchesInput = {
   alertRules?: Prisma.AlertRuleUncheckedCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterUncheckedCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionUncheckedCreateNestedManyWithoutUserInput
@@ -1353,6 +1404,7 @@ export type UserUpdateWithoutDexSwapWatchesInput = {
   alertRules?: Prisma.AlertRuleUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUpdateManyWithoutUserNestedInput
@@ -1373,6 +1425,7 @@ export type UserUncheckedUpdateWithoutDexSwapWatchesInput = {
   alertRules?: Prisma.AlertRuleUncheckedUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUncheckedUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -1394,6 +1447,7 @@ export type UserCreateWithoutNotificationDeliveriesInput = {
   alertRules?: Prisma.AlertRuleCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionCreateNestedManyWithoutUserInput
 }
@@ -1414,6 +1468,7 @@ export type UserUncheckedCreateWithoutNotificationDeliveriesInput = {
   alertRules?: Prisma.AlertRuleUncheckedCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterUncheckedCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionUncheckedCreateNestedManyWithoutUserInput
 }
@@ -1450,6 +1505,7 @@ export type UserUpdateWithoutNotificationDeliveriesInput = {
   alertRules?: Prisma.AlertRuleUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUpdateManyWithoutUserNestedInput
 }
@@ -1470,6 +1526,7 @@ export type UserUncheckedUpdateWithoutNotificationDeliveriesInput = {
   alertRules?: Prisma.AlertRuleUncheckedUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUncheckedUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUncheckedUpdateManyWithoutUserNestedInput
 }
@@ -1489,6 +1546,7 @@ export type UserCreateWithoutDeliveryAttemptsInput = {
   dexSwapWatches?: Prisma.DexSwapWatchCreateNestedManyWithoutUserInput
   alertRules?: Prisma.AlertRuleCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionCreateNestedManyWithoutUserInput
@@ -1509,6 +1567,7 @@ export type UserUncheckedCreateWithoutDeliveryAttemptsInput = {
   dexSwapWatches?: Prisma.DexSwapWatchUncheckedCreateNestedManyWithoutUserInput
   alertRules?: Prisma.AlertRuleUncheckedCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterUncheckedCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionUncheckedCreateNestedManyWithoutUserInput
@@ -1545,6 +1604,7 @@ export type UserUpdateWithoutDeliveryAttemptsInput = {
   dexSwapWatches?: Prisma.DexSwapWatchUpdateManyWithoutUserNestedInput
   alertRules?: Prisma.AlertRuleUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUpdateManyWithoutUserNestedInput
@@ -1565,6 +1625,7 @@ export type UserUncheckedUpdateWithoutDeliveryAttemptsInput = {
   dexSwapWatches?: Prisma.DexSwapWatchUncheckedUpdateManyWithoutUserNestedInput
   alertRules?: Prisma.AlertRuleUncheckedUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUncheckedUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -1585,6 +1646,7 @@ export type UserCreateWithoutDeadLettersInput = {
   dexSwapWatches?: Prisma.DexSwapWatchCreateNestedManyWithoutUserInput
   alertRules?: Prisma.AlertRuleCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionCreateNestedManyWithoutUserInput
@@ -1605,6 +1667,7 @@ export type UserUncheckedCreateWithoutDeadLettersInput = {
   dexSwapWatches?: Prisma.DexSwapWatchUncheckedCreateNestedManyWithoutUserInput
   alertRules?: Prisma.AlertRuleUncheckedCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionUncheckedCreateNestedManyWithoutUserInput
@@ -1641,6 +1704,7 @@ export type UserUpdateWithoutDeadLettersInput = {
   dexSwapWatches?: Prisma.DexSwapWatchUpdateManyWithoutUserNestedInput
   alertRules?: Prisma.AlertRuleUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUpdateManyWithoutUserNestedInput
@@ -1661,6 +1725,107 @@ export type UserUncheckedUpdateWithoutDeadLettersInput = {
   dexSwapWatches?: Prisma.DexSwapWatchUncheckedUpdateManyWithoutUserNestedInput
   alertRules?: Prisma.AlertRuleUncheckedUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedUpdateManyWithoutUserNestedInput
+  mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedUpdateManyWithoutUserNestedInput
+  notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
+  refreshSessions?: Prisma.RefreshSessionUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutWebhookSandboxReplaysInput = {
+  id?: string
+  email: string
+  mfaSecret?: string | null
+  mfaEnabled?: boolean
+  createdAt?: Date | string
+  wallets?: Prisma.WalletCreateNestedManyWithoutUserInput
+  webhooks?: Prisma.WebhookCreateNestedManyWithoutUserInput
+  notifyPrefs?: Prisma.NotificationPreferenceCreateNestedOneWithoutUserInput
+  sorobanSubscriptions?: Prisma.SorobanContractSubscriptionCreateNestedManyWithoutUserInput
+  multisigSignerWatches?: Prisma.MultisigSignerWatcherCreateNestedManyWithoutUserInput
+  anchorWatches?: Prisma.AnchorTransactionWatchCreateNestedManyWithoutUserInput
+  dexSwapWatches?: Prisma.DexSwapWatchCreateNestedManyWithoutUserInput
+  alertRules?: Prisma.AlertRuleCreateNestedManyWithoutUserInput
+  deliveryAttempts?: Prisma.NotificationDeliveryAttemptCreateNestedManyWithoutUserInput
+  deadLetters?: Prisma.DeadLetterCreateNestedManyWithoutUserInput
+  mfaRecoveryCodes?: Prisma.MfaRecoveryCodeCreateNestedManyWithoutUserInput
+  notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
+  refreshSessions?: Prisma.RefreshSessionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutWebhookSandboxReplaysInput = {
+  id?: string
+  email: string
+  mfaSecret?: string | null
+  mfaEnabled?: boolean
+  createdAt?: Date | string
+  wallets?: Prisma.WalletUncheckedCreateNestedManyWithoutUserInput
+  webhooks?: Prisma.WebhookUncheckedCreateNestedManyWithoutUserInput
+  notifyPrefs?: Prisma.NotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
+  sorobanSubscriptions?: Prisma.SorobanContractSubscriptionUncheckedCreateNestedManyWithoutUserInput
+  multisigSignerWatches?: Prisma.MultisigSignerWatcherUncheckedCreateNestedManyWithoutUserInput
+  anchorWatches?: Prisma.AnchorTransactionWatchUncheckedCreateNestedManyWithoutUserInput
+  dexSwapWatches?: Prisma.DexSwapWatchUncheckedCreateNestedManyWithoutUserInput
+  alertRules?: Prisma.AlertRuleUncheckedCreateNestedManyWithoutUserInput
+  deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedCreateNestedManyWithoutUserInput
+  deadLetters?: Prisma.DeadLetterUncheckedCreateNestedManyWithoutUserInput
+  mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedCreateNestedManyWithoutUserInput
+  notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
+  refreshSessions?: Prisma.RefreshSessionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutWebhookSandboxReplaysInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutWebhookSandboxReplaysInput, Prisma.UserUncheckedCreateWithoutWebhookSandboxReplaysInput>
+}
+
+export type UserUpsertWithoutWebhookSandboxReplaysInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutWebhookSandboxReplaysInput, Prisma.UserUncheckedUpdateWithoutWebhookSandboxReplaysInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutWebhookSandboxReplaysInput, Prisma.UserUncheckedCreateWithoutWebhookSandboxReplaysInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutWebhookSandboxReplaysInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutWebhookSandboxReplaysInput, Prisma.UserUncheckedUpdateWithoutWebhookSandboxReplaysInput>
+}
+
+export type UserUpdateWithoutWebhookSandboxReplaysInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  mfaSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mfaEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  wallets?: Prisma.WalletUpdateManyWithoutUserNestedInput
+  webhooks?: Prisma.WebhookUpdateManyWithoutUserNestedInput
+  notifyPrefs?: Prisma.NotificationPreferenceUpdateOneWithoutUserNestedInput
+  sorobanSubscriptions?: Prisma.SorobanContractSubscriptionUpdateManyWithoutUserNestedInput
+  multisigSignerWatches?: Prisma.MultisigSignerWatcherUpdateManyWithoutUserNestedInput
+  anchorWatches?: Prisma.AnchorTransactionWatchUpdateManyWithoutUserNestedInput
+  dexSwapWatches?: Prisma.DexSwapWatchUpdateManyWithoutUserNestedInput
+  alertRules?: Prisma.AlertRuleUpdateManyWithoutUserNestedInput
+  deliveryAttempts?: Prisma.NotificationDeliveryAttemptUpdateManyWithoutUserNestedInput
+  deadLetters?: Prisma.DeadLetterUpdateManyWithoutUserNestedInput
+  mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUpdateManyWithoutUserNestedInput
+  notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
+  refreshSessions?: Prisma.RefreshSessionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutWebhookSandboxReplaysInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  mfaSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mfaEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  wallets?: Prisma.WalletUncheckedUpdateManyWithoutUserNestedInput
+  webhooks?: Prisma.WebhookUncheckedUpdateManyWithoutUserNestedInput
+  notifyPrefs?: Prisma.NotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
+  sorobanSubscriptions?: Prisma.SorobanContractSubscriptionUncheckedUpdateManyWithoutUserNestedInput
+  multisigSignerWatches?: Prisma.MultisigSignerWatcherUncheckedUpdateManyWithoutUserNestedInput
+  anchorWatches?: Prisma.AnchorTransactionWatchUncheckedUpdateManyWithoutUserNestedInput
+  dexSwapWatches?: Prisma.DexSwapWatchUncheckedUpdateManyWithoutUserNestedInput
+  alertRules?: Prisma.AlertRuleUncheckedUpdateManyWithoutUserNestedInput
+  deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedUpdateManyWithoutUserNestedInput
+  deadLetters?: Prisma.DeadLetterUncheckedUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -1682,6 +1847,7 @@ export type UserCreateWithoutMfaRecoveryCodesInput = {
   alertRules?: Prisma.AlertRuleCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionCreateNestedManyWithoutUserInput
 }
@@ -1702,6 +1868,7 @@ export type UserUncheckedCreateWithoutMfaRecoveryCodesInput = {
   alertRules?: Prisma.AlertRuleUncheckedCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterUncheckedCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   refreshSessions?: Prisma.RefreshSessionUncheckedCreateNestedManyWithoutUserInput
 }
@@ -1738,6 +1905,7 @@ export type UserUpdateWithoutMfaRecoveryCodesInput = {
   alertRules?: Prisma.AlertRuleUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUpdateManyWithoutUserNestedInput
 }
@@ -1758,6 +1926,7 @@ export type UserUncheckedUpdateWithoutMfaRecoveryCodesInput = {
   alertRules?: Prisma.AlertRuleUncheckedUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUncheckedUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   refreshSessions?: Prisma.RefreshSessionUncheckedUpdateManyWithoutUserNestedInput
 }
@@ -1778,6 +1947,7 @@ export type UserCreateWithoutRefreshSessionsInput = {
   alertRules?: Prisma.AlertRuleCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
 }
@@ -1798,6 +1968,7 @@ export type UserUncheckedCreateWithoutRefreshSessionsInput = {
   alertRules?: Prisma.AlertRuleUncheckedCreateNestedManyWithoutUserInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedCreateNestedManyWithoutUserInput
   deadLetters?: Prisma.DeadLetterUncheckedCreateNestedManyWithoutUserInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedCreateNestedManyWithoutUserInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
 }
@@ -1834,6 +2005,7 @@ export type UserUpdateWithoutRefreshSessionsInput = {
   alertRules?: Prisma.AlertRuleUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
 }
@@ -1854,6 +2026,7 @@ export type UserUncheckedUpdateWithoutRefreshSessionsInput = {
   alertRules?: Prisma.AlertRuleUncheckedUpdateManyWithoutUserNestedInput
   deliveryAttempts?: Prisma.NotificationDeliveryAttemptUncheckedUpdateManyWithoutUserNestedInput
   deadLetters?: Prisma.DeadLetterUncheckedUpdateManyWithoutUserNestedInput
+  webhookSandboxReplays?: Prisma.WebhookSandboxReplayUncheckedUpdateManyWithoutUserNestedInput
   mfaRecoveryCodes?: Prisma.MfaRecoveryCodeUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
 }
@@ -1873,6 +2046,7 @@ export type UserCountOutputType = {
   alertRules: number
   deliveryAttempts: number
   deadLetters: number
+  webhookSandboxReplays: number
   mfaRecoveryCodes: number
   notificationDeliveries: number
   refreshSessions: number
@@ -1888,6 +2062,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   alertRules?: boolean | UserCountOutputTypeCountAlertRulesArgs
   deliveryAttempts?: boolean | UserCountOutputTypeCountDeliveryAttemptsArgs
   deadLetters?: boolean | UserCountOutputTypeCountDeadLettersArgs
+  webhookSandboxReplays?: boolean | UserCountOutputTypeCountWebhookSandboxReplaysArgs
   mfaRecoveryCodes?: boolean | UserCountOutputTypeCountMfaRecoveryCodesArgs
   notificationDeliveries?: boolean | UserCountOutputTypeCountNotificationDeliveriesArgs
   refreshSessions?: boolean | UserCountOutputTypeCountRefreshSessionsArgs
@@ -1969,6 +2144,13 @@ export type UserCountOutputTypeCountDeadLettersArgs<ExtArgs extends runtime.Type
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountWebhookSandboxReplaysArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WebhookSandboxReplayWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountMfaRecoveryCodesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.MfaRecoveryCodeWhereInput
 }
@@ -2004,6 +2186,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   alertRules?: boolean | Prisma.User$alertRulesArgs<ExtArgs>
   deliveryAttempts?: boolean | Prisma.User$deliveryAttemptsArgs<ExtArgs>
   deadLetters?: boolean | Prisma.User$deadLettersArgs<ExtArgs>
+  webhookSandboxReplays?: boolean | Prisma.User$webhookSandboxReplaysArgs<ExtArgs>
   mfaRecoveryCodes?: boolean | Prisma.User$mfaRecoveryCodesArgs<ExtArgs>
   notificationDeliveries?: boolean | Prisma.User$notificationDeliveriesArgs<ExtArgs>
   refreshSessions?: boolean | Prisma.User$refreshSessionsArgs<ExtArgs>
@@ -2046,6 +2229,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   alertRules?: boolean | Prisma.User$alertRulesArgs<ExtArgs>
   deliveryAttempts?: boolean | Prisma.User$deliveryAttemptsArgs<ExtArgs>
   deadLetters?: boolean | Prisma.User$deadLettersArgs<ExtArgs>
+  webhookSandboxReplays?: boolean | Prisma.User$webhookSandboxReplaysArgs<ExtArgs>
   mfaRecoveryCodes?: boolean | Prisma.User$mfaRecoveryCodesArgs<ExtArgs>
   notificationDeliveries?: boolean | Prisma.User$notificationDeliveriesArgs<ExtArgs>
   refreshSessions?: boolean | Prisma.User$refreshSessionsArgs<ExtArgs>
@@ -2067,6 +2251,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     alertRules: Prisma.$AlertRulePayload<ExtArgs>[]
     deliveryAttempts: Prisma.$NotificationDeliveryAttemptPayload<ExtArgs>[]
     deadLetters: Prisma.$DeadLetterPayload<ExtArgs>[]
+    webhookSandboxReplays: Prisma.$WebhookSandboxReplayPayload<ExtArgs>[]
     mfaRecoveryCodes: Prisma.$MfaRecoveryCodePayload<ExtArgs>[]
     notificationDeliveries: Prisma.$NotificationDeliveryPayload<ExtArgs>[]
     refreshSessions: Prisma.$RefreshSessionPayload<ExtArgs>[]
@@ -2481,6 +2666,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   alertRules<T extends Prisma.User$alertRulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$alertRulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AlertRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   deliveryAttempts<T extends Prisma.User$deliveryAttemptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$deliveryAttemptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationDeliveryAttemptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   deadLetters<T extends Prisma.User$deadLettersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$deadLettersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DeadLetterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  webhookSandboxReplays<T extends Prisma.User$webhookSandboxReplaysArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$webhookSandboxReplaysArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WebhookSandboxReplayPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   mfaRecoveryCodes<T extends Prisma.User$mfaRecoveryCodesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$mfaRecoveryCodesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MfaRecoveryCodePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notificationDeliveries<T extends Prisma.User$notificationDeliveriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationDeliveriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationDeliveryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   refreshSessions<T extends Prisma.User$refreshSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$refreshSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RefreshSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -3143,6 +3329,30 @@ export type User$deadLettersArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.DeadLetterScalarFieldEnum | Prisma.DeadLetterScalarFieldEnum[]
+}
+
+/**
+ * User.webhookSandboxReplays
+ */
+export type User$webhookSandboxReplaysArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WebhookSandboxReplay
+   */
+  select?: Prisma.WebhookSandboxReplaySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WebhookSandboxReplay
+   */
+  omit?: Prisma.WebhookSandboxReplayOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WebhookSandboxReplayInclude<ExtArgs> | null
+  where?: Prisma.WebhookSandboxReplayWhereInput
+  orderBy?: Prisma.WebhookSandboxReplayOrderByWithRelationInput | Prisma.WebhookSandboxReplayOrderByWithRelationInput[]
+  cursor?: Prisma.WebhookSandboxReplayWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WebhookSandboxReplayScalarFieldEnum | Prisma.WebhookSandboxReplayScalarFieldEnum[]
 }
 
 /**

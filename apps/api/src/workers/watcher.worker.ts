@@ -15,6 +15,7 @@ import { withWalletLock } from '../lib/lock';
 import { shouldAlert, PaymentContext } from '../lib/rules-engine';
 import { evaluateAndDispatch, AlertRuleRecord, NormalizedPaymentEvent } from '../lib/alert-rule-evaluator';
 import { MemoryMonitor, MemorySnapshot } from '../utils/memory-monitor';
+import { appendPaymentChecksum } from '../services/checksumChain.service';
 import { createLogger } from '../lib/logger';
 import { WorkerLifecycleManager } from '../lib/worker-lifecycle';
 import { trace, SpanStatusCode, TraceFlags } from '@opentelemetry/api';
@@ -136,6 +137,20 @@ export async function processPaymentRecord(
       }
 
       if (isNewPayment && payment) {
+        // Best-effort, non-throwing by design (see services/checksumChain.service.ts):
+        // a checksum-chain bug must never block real payment ingestion/alerting.
+        await appendPaymentChecksum({
+          id: payment.id,
+          txHash,
+          walletId: wallet.id,
+          fromAddress,
+          amount: Number(amount),
+          asset,
+          assetIssuer,
+          memo,
+          receivedAt,
+        });
+
         if (wallet.userId) {
           await publishPaymentEvent(wallet.userId, payment);
         }

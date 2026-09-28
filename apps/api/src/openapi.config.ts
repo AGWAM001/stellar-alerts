@@ -6,6 +6,9 @@ import {
   deadLetterIdSchema,
   listDeadLettersQuerySchema,
   suppressDeadLetterSchema,
+  sandboxReplayIdSchema,
+  sandboxReplayInputSchema,
+  listSandboxReplaysQuerySchema,
 } from './modules/dead-letters/dead-letters.schema';
 
 /**
@@ -46,6 +49,9 @@ export const openApiComponentSchemas = {
   DeadLetterIdParams: z.toJSONSchema(deadLetterIdSchema),
   ListDeadLettersQuery: z.toJSONSchema(listDeadLettersQuerySchema),
   SuppressDeadLetterInput: z.toJSONSchema(suppressDeadLetterSchema),
+  SandboxReplayIdParams: z.toJSONSchema(sandboxReplayIdSchema),
+  SandboxReplayInput: z.toJSONSchema(sandboxReplayInputSchema),
+  ListSandboxReplaysQuery: z.toJSONSchema(listSandboxReplaysQuerySchema),
   ErrorResponse: z.toJSONSchema(errorResponseSchema),
 };
 
@@ -63,6 +69,7 @@ export const openApiOptions = {
       { name: 'payments', description: 'Incoming payment history and summaries' },
       { name: 'webhooks', description: 'Custom webhook alert endpoint management' },
       { name: 'dead-letters', description: 'Inspection, replay and suppression of failed notification deliveries' },
+      { name: 'webhook-sandbox', description: 'Sandbox replay of dead letters against a mock webhook receiver with response inspection' },
     ],
     components: {
       schemas: openApiComponentSchemas as Record<string, any>,

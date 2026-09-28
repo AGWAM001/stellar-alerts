@@ -48,6 +48,16 @@ export type NotificationPreference = Prisma.NotificationPreferenceModel
  */
 export type DeliveryLog = Prisma.DeliveryLogModel
 /**
+ * Model PaymentChecksum
+ * 
+ */
+export type PaymentChecksum = Prisma.PaymentChecksumModel
+/**
+ * Model DailyChecksumRoot
+ * 
+ */
+export type DailyChecksumRoot = Prisma.DailyChecksumRootModel
+/**
  * Model AlertRule
  * 
  */
@@ -162,6 +172,11 @@ export type NotificationDeliveryAttempt = Prisma.NotificationDeliveryAttemptMode
  * 
  */
 export type DeadLetter = Prisma.DeadLetterModel
+/**
+ * Model WebhookSandboxReplay
+ * 
+ */
+export type WebhookSandboxReplay = Prisma.WebhookSandboxReplayModel
 /**
  * Model DeadLetterAudit
  * 
