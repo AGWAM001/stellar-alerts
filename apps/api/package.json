@@ -16,7 +16,10 @@
     "test:fuzz": "vitest run src/utils/__tests__/webhook-fuzzer.test.ts",
     "test:e2e": "vitest run src/__tests_/e2e.test.ts",
     "test:coverage": "vitest run --coverage",
-    "cli:tui": "tsx --env-file=.env src/cli/tui-dashboard.tsx"
+    "cli:tui": "tsx --env-file=.env src/cli/tui-dashboard.tsx",
+    "daemon:start": "tsx --env-file=.env src/cli/daemon.ts start",
+    "daemon:install:systemd": "tsx src/cli/daemon.ts install:systemd",
+    "daemon:install:launchd": "tsx src/cli/daemon.ts install:launchd"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
@@ -65,6 +68,7 @@
     "@prisma/instrumentation": "^7.10.0",
     "@stellar-alerts/shared": "*",
     "bullmq": "^5.41.6",
+    "commander": "^13.0.0",
     "dotenv": "^17.4.2",
     "fastify": "^5.10.0",
     "fastify-plugin": "^6.0.0",
