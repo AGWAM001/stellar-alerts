@@ -425,6 +425,7 @@ export const ModelName = {
   NotificationDelivery: 'NotificationDelivery',
   NotificationDeliveryAttempt: 'NotificationDeliveryAttempt',
   DeadLetter: 'DeadLetter',
+  WebhookSandboxReplay: 'WebhookSandboxReplay',
   DeadLetterAudit: 'DeadLetterAudit',
   MfaRecoveryCode: 'MfaRecoveryCode',
   RefreshSession: 'RefreshSession',
@@ -444,7 +445,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "wallet" | "ingestionCursor" | "payment" | "notificationPreference" | "alertRule" | "alertRuleDispatchLog" | "whatsAppDeliveryLog" | "webhook" | "webhookLog" | "webhookCircuitBreaker" | "sorobanEventSnapshot" | "sorobanStateAudit" | "sorobanContractSubscription" | "sacTokenMintBurnEvent" | "sacTokenSupply" | "multisigTreasury" | "multisigSignerWatcher" | "pendingMultisigTransaction" | "anchorTransactionWatch" | "dexSwapWatch" | "sorobanTopicIndex" | "sorobanTopicIndexCursor" | "dexSwapEvent" | "securityAuditLog" | "notificationDelivery" | "notificationDeliveryAttempt" | "deadLetter" | "deadLetterAudit" | "mfaRecoveryCode" | "refreshSession" | "refreshTokenHistory"
+    modelProps: "user" | "wallet" | "ingestionCursor" | "payment" | "notificationPreference" | "alertRule" | "alertRuleDispatchLog" | "whatsAppDeliveryLog" | "webhook" | "webhookLog" | "webhookCircuitBreaker" | "sorobanEventSnapshot" | "sorobanStateAudit" | "sorobanContractSubscription" | "sacTokenMintBurnEvent" | "sacTokenSupply" | "multisigTreasury" | "multisigSignerWatcher" | "pendingMultisigTransaction" | "anchorTransactionWatch" | "dexSwapWatch" | "sorobanTopicIndex" | "sorobanTopicIndexCursor" | "dexSwapEvent" | "securityAuditLog" | "notificationDelivery" | "notificationDeliveryAttempt" | "deadLetter" | "webhookSandboxReplay" | "deadLetterAudit" | "mfaRecoveryCode" | "refreshSession" | "refreshTokenHistory"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2520,6 +2521,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    WebhookSandboxReplay: {
+      payload: Prisma.$WebhookSandboxReplayPayload<ExtArgs>
+      fields: Prisma.WebhookSandboxReplayFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WebhookSandboxReplayFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WebhookSandboxReplayFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>
+        }
+        findFirst: {
+          args: Prisma.WebhookSandboxReplayFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WebhookSandboxReplayFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>
+        }
+        findMany: {
+          args: Prisma.WebhookSandboxReplayFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>[]
+        }
+        create: {
+          args: Prisma.WebhookSandboxReplayCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>
+        }
+        createMany: {
+          args: Prisma.WebhookSandboxReplayCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WebhookSandboxReplayCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>[]
+        }
+        delete: {
+          args: Prisma.WebhookSandboxReplayDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>
+        }
+        update: {
+          args: Prisma.WebhookSandboxReplayUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>
+        }
+        deleteMany: {
+          args: Prisma.WebhookSandboxReplayDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WebhookSandboxReplayUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WebhookSandboxReplayUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>[]
+        }
+        upsert: {
+          args: Prisma.WebhookSandboxReplayUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>
+        }
+        aggregate: {
+          args: Prisma.WebhookSandboxReplayAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWebhookSandboxReplay>
+        }
+        groupBy: {
+          args: Prisma.WebhookSandboxReplayGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebhookSandboxReplayGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WebhookSandboxReplayCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebhookSandboxReplayCountAggregateOutputType> | number
+        }
+      }
+    }
     DeadLetterAudit: {
       payload: Prisma.$DeadLetterAuditPayload<ExtArgs>
       fields: Prisma.DeadLetterAuditFieldRefs
@@ -3262,6 +3337,27 @@ export const DeadLetterScalarFieldEnum = {
 export type DeadLetterScalarFieldEnum = (typeof DeadLetterScalarFieldEnum)[keyof typeof DeadLetterScalarFieldEnum]
 
 
+export const WebhookSandboxReplayScalarFieldEnum = {
+  id: 'id',
+  deadLetterId: 'deadLetterId',
+  userId: 'userId',
+  replayType: 'replayType',
+  requestEnvelope: 'requestEnvelope',
+  requestHeaders: 'requestHeaders',
+  requestBody: 'requestBody',
+  responseStatus: 'responseStatus',
+  responseHeaders: 'responseHeaders',
+  responseBody: 'responseBody',
+  responseDelayMs: 'responseDelayMs',
+  durationMs: 'durationMs',
+  status: 'status',
+  error: 'error',
+  createdAt: 'createdAt'
+} as const
+
+export type WebhookSandboxReplayScalarFieldEnum = (typeof WebhookSandboxReplayScalarFieldEnum)[keyof typeof WebhookSandboxReplayScalarFieldEnum]
+
+
 export const DeadLetterAuditScalarFieldEnum = {
   id: 'id',
   deadLetterId: 'deadLetterId',
@@ -3639,6 +3735,7 @@ export type GlobalOmitConfig = {
   notificationDelivery?: Prisma.NotificationDeliveryOmit
   notificationDeliveryAttempt?: Prisma.NotificationDeliveryAttemptOmit
   deadLetter?: Prisma.DeadLetterOmit
+  webhookSandboxReplay?: Prisma.WebhookSandboxReplayOmit
   deadLetterAudit?: Prisma.DeadLetterAuditOmit
   mfaRecoveryCode?: Prisma.MfaRecoveryCodeOmit
   refreshSession?: Prisma.RefreshSessionOmit
