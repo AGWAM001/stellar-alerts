@@ -65,6 +65,11 @@ export type Payment = Prisma.PaymentModel
  */
 export type NotificationPreference = Prisma.NotificationPreferenceModel
 /**
+ * Model DeliveryLog
+ * 
+ */
+export type DeliveryLog = Prisma.DeliveryLogModel
+/**
  * Model AlertRule
  * 
  */
