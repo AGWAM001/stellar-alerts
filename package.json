@@ -30,6 +30,8 @@
     "security:audit": "osv-scanner scan source -r . --config osv-scanner.toml",
     "verify:migrations": "npx tsx scripts/verify-migrations.ts",
     "verify:migrations:dry-run": "npx tsx scripts/verify-migrations.ts --dry-run",
+    "verify:migrations:shadow": "npx tsx scripts/verify-migrations-shadow.ts",
+    "test:scripts": "vitest run scripts/verify-migrations.test.ts scripts/verify-migrations-shadow.test.ts",
     "prepare": "husky"
   },
   "packageManager": "npm@10.8.2",
