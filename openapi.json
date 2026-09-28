@@ -179,6 +179,41 @@
           }
         },
         "additionalProperties": false
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Stable, machine-readable error code (e.g. VALIDATION_ERROR, NOT_FOUND, CONFLICT)."
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable, client-safe message. Never contains internal/sensitive detail."
+              },
+              "details": {
+                "description": "Optional structured detail, e.g. field-level validation errors."
+              },
+              "requestId": {
+                "type": "string",
+                "description": "Correlation id — also returned as the x-request-id response header."
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "requestId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
       }
     }
   },
