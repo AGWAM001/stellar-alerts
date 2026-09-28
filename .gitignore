@@ -24,3 +24,19 @@ apps/**/.env.local
 
 target/
 Cargo.lock
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+crash.log
+crash.*.log
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform/terraform.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
