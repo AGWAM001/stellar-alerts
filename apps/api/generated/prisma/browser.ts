@@ -173,6 +173,11 @@ export type NotificationDeliveryAttempt = Prisma.NotificationDeliveryAttemptMode
  */
 export type DeadLetter = Prisma.DeadLetterModel
 /**
+ * Model WebhookSandboxReplay
+ * 
+ */
+export type WebhookSandboxReplay = Prisma.WebhookSandboxReplayModel
+/**
  * Model DeadLetterAudit
  * 
  */

@@ -499,6 +499,16 @@ export interface PrismaClient<
   get deadLetter(): Prisma.DeadLetterDelegate<ExtArgs, { omit: OmitOpts }>;
 
   /**
+   * `prisma.webhookSandboxReplay`: Exposes CRUD operations for the **WebhookSandboxReplay** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WebhookSandboxReplays
+    * const webhookSandboxReplays = await prisma.webhookSandboxReplay.findMany()
+    * ```
+    */
+  get webhookSandboxReplay(): Prisma.WebhookSandboxReplayDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
    * `prisma.deadLetterAudit`: Exposes CRUD operations for the **DeadLetterAudit** model.
     * Example usage:
     * ```ts
