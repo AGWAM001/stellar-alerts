@@ -3,7 +3,7 @@ import CircuitBreaker from 'opossum';
 import { env } from '../config/env';
 import { fetchWithTimeout, withDeadline } from './external-request';
 import { workerFairnessManager } from './rate-budget';
-import { registerRedisCleanupTask } from './redis';
+import { registerRedisCleanupTask, redisCache } from './redis';
 import { cryptoVault } from '../utils/crypto-vault';
 import { applyWebhookPayloadTemplate } from '../utils/payload-template';
 import { adaptiveWebhookRateLimiter, waitForAdaptiveBackoff } from '../utils/rate-limiter';
@@ -62,6 +62,37 @@ export let alertQueueEvents: QueueEvents | null = null;
 export let alertWorker: Worker<AlertJobData> | null = null;
 
 const circuitBreakers = new Map<string, CircuitBreaker<any>>();
+
+interface CircuitBreakerState {
+  state: "closed" | "open" | "half-open";
+  failureCount: number;
+  openedAt?: number;
+  lastFailureAt?: number;
+}
+
+const CIRCUIT_BREAKER_REDIS_PREFIX = "circuit_breaker:";
+
+async function syncCircuitBreakerStateToRedis(webhookId: string, state: CircuitBreakerState): Promise<void> {
+  try {
+    const key = `${CIRCUIT_BREAKER_REDIS_PREFIX}${webhookId}`;
+    const value = JSON.stringify(state);
+    await redisCache.set(key, value, 3600); // 1 hour TTL
+  } catch (error: any) {
+    console.error(`[CircuitBreaker] Failed to sync state to Redis for webhook ${webhookId}: ${error.message}`);
+  }
+}
+
+async function loadCircuitBreakerStateFromRedis(webhookId: string): Promise<CircuitBreakerState | null> {
+  try {
+    const key = `${CIRCUIT_BREAKER_REDIS_PREFIX}${webhookId}`;
+    const value = await redisCache.get(key);
+    if (!value) return null;
+    return JSON.parse(value) as CircuitBreakerState;
+  } catch (error: any) {
+    console.error(`[CircuitBreaker] Failed to load state from Redis for webhook ${webhookId}: ${error.message}`);
+    return null;
+  }
+}
 
 export function buildTelegramPaymentCard(data: AlertJobData): string {
   const escapeHtml = (value: string) => value.replace(/[&<>\"']/g, (char) => ({
@@ -176,6 +207,42 @@ async function getOrCreateCircuitBreaker(
     },
   );
 
+  // Initialize with Redis sync
+  const redisState = await loadCircuitBreakerStateFromRedis(webhookId);
+  if (redisState) {
+    if (redisState.state === "open") {
+      breaker.open();
+    } else if (redisState.state === "half-open") {
+      breaker.halfOpen();
+    } else {
+      breaker.close();
+    }
+    console.log(`[CircuitBreaker] Initialized webhook ${webhookId} with Redis state: ${redisState.state}`);
+  }
+
+  // Add event listeners to sync state changes to Redis
+  breaker.on('open', () => {
+    syncCircuitBreakerStateToRedis(webhookId, {
+      state: 'open',
+      failureCount: CIRCUIT_BREAKER_THRESHOLD,
+      openedAt: Date.now(),
+    });
+  });
+
+  breaker.on('halfOpen', () => {
+    syncCircuitBreakerStateToRedis(webhookId, {
+      state: 'half-open',
+      failureCount: 0,
+    });
+  });
+
+  breaker.on('close', () => {
+    syncCircuitBreakerStateToRedis(webhookId, {
+      state: 'closed',
+      failureCount: 0,
+    });
+  });
+
   circuitBreakers.set(webhookId, breaker);
   return breaker;
 }
@@ -199,6 +266,14 @@ async function updateCircuitBreakerState(
       lastFailureAt: state === "open" ? new Date() : undefined,
       openedAt: state === "open" ? new Date() : undefined,
     },
+  });
+
+  // Sync to Redis for distributed state sharing
+  await syncCircuitBreakerStateToRedis(webhookId, {
+    state,
+    failureCount,
+    openedAt: state === "open" ? Date.now() : undefined,
+    lastFailureAt: state === "open" ? Date.now() : undefined,
   });
 }
 
