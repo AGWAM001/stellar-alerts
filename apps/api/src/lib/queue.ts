@@ -19,6 +19,7 @@ import { dispatchWhatsAppAlert } from '../utils/whatsapp';
 import { emailService } from '../services/email.service';
 import { dispatchDiscordAlert } from '../utils/discord';
 import { dispatchSlackAlert, isValidSlackWebhookUrl } from '../utils/slack';
+import { dispatchPushNotification, PushNotificationData } from '../utils/push-protocol';
 
 function decryptWebhookSecret(webhook: {
   keyVersion: number;
@@ -830,6 +831,47 @@ export async function processAlertDispatch(data: AlertJobData) {
       ).catch(async (err: any) => {
         console.warn(`[Worker] Email dispatch error: ${err.message}`);
         await recordDeadLetter('email', recipientEmail, err);
+        if (err.isRetriable) {
+          throw err;
+        }
+        return null;
+      });
+    }
+
+    // Dispatch Push Protocol alert if user configured push preferences (#253)
+    const pushEnabled = wallet?.user?.notifyPrefs?.pushEnabled;
+    const pushDestination = wallet?.user?.notifyPrefs?.pushChannelAddress || wallet?.publicKey;
+    if (pushEnabled && pushDestination) {
+      await deliverWithIdempotency(
+        {
+          paymentId: data.paymentId,
+          channel: "push",
+          destination: pushDestination,
+          userId,
+        },
+        async () => {
+          await workerFairnessManager.acquireProviderBudget('push');
+          const pushData: PushNotificationData = {
+            paymentId: data.paymentId,
+            txHash: data.txHash,
+            amount: data.amount,
+            asset: data.asset,
+            assetIssuer: data.assetIssuer,
+            fromAddress: data.fromAddress,
+            recipientAddress: pushDestination,
+            receivedAt: data.receivedAt,
+          };
+          const ok = await dispatchPushNotification(pushDestination, pushData);
+          if (!ok) {
+            const err: any = new Error(`Push Protocol dispatch failed for recipient ${pushDestination}`);
+            err.isRetriable = true;
+            throw err;
+          }
+          return { success: true };
+        }
+      ).catch(async (err: any) => {
+        console.warn(`[Worker] Push Protocol dispatch error: ${err.message}`);
+        await recordDeadLetter('push', pushDestination, err);
         if (err.isRetriable) {
           throw err;
         }

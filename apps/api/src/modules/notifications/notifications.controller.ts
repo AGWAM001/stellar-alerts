@@ -1,16 +1,18 @@
 /**
  * Notifications Controller
  * 
- * Handles HTTP requests for notification preferences.
+ * Handles HTTP requests for notification preferences, freelancer setup flow,
+ * and Telegram account linking with one-time sync codes.
  */
 
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { notificationsService } from './notifications.service';
+import { telegramSyncService } from './telegram-sync.service';
 import { AuthenticationError, AuthorizationError, ProviderError, ValidationError } from '../../lib/errors';
 
 export class NotificationsController {
   /**
-   * Update notification preferences
+   * Update notification preferences (MFA protected).
    */
   async updatePreferences(request: FastifyRequest, reply: FastifyReply) {
     if (!request.user) {
@@ -55,7 +57,7 @@ export class NotificationsController {
   }
 
   /**
-   * Get notification preferences
+   * Get notification preferences for the authenticated user.
    */
   async getPreferences(request: FastifyRequest, reply: FastifyReply) {
     if (!request.user) {
@@ -70,6 +72,106 @@ export class NotificationsController {
   }
 
   /**
+   * Update freelancer channel setup preferences (#259).
+   */
+  async updateFreelancerPreferences(request: FastifyRequest, reply: FastifyReply) {
+    if (!request.user) {
+      throw new AuthenticationError('User not authenticated');
+    }
+
+    const body = request.body as any;
+    const { mfaToken, ...preferences } = body;
+
+    await notificationsService.updatePreferences(
+      request.user.id,
+      preferences,
+      mfaToken
+    );
+
+    const updated = await notificationsService.getPreferences(request.user.id);
+
+    return reply.send({
+      success: true,
+      message: 'Freelancer notification preferences configured successfully',
+      preferences: updated,
+    });
+  }
+
+  /**
+   * Get freelancer channel setup preferences (#259).
+   */
+  async getFreelancerPreferences(request: FastifyRequest, reply: FastifyReply) {
+    if (!request.user) {
+      throw new AuthenticationError('User not authenticated');
+    }
+
+    const preferences = await notificationsService.getPreferences(request.user.id);
+    return reply.send({
+      success: true,
+      preferences: preferences || {},
+    });
+  }
+
+  /**
+   * Generate an expiring one-time sync code for Telegram account linking (#260).
+   */
+  async generateTelegramSyncCode(request: FastifyRequest, reply: FastifyReply) {
+    if (!request.user) {
+      throw new AuthenticationError('User not authenticated');
+    }
+
+    const body = (request.body as { walletAddress?: string }) || {};
+    const result = await telegramSyncService.generateSyncCode(request.user.id, body.walletAddress);
+
+    return reply.send({
+      success: true,
+      ...result,
+    });
+  }
+
+  /**
+   * Confirm Telegram linking via a one-time sync code (#260).
+   * Verifies expiry and applies replay protection.
+   */
+  async confirmTelegramSync(request: FastifyRequest, reply: FastifyReply) {
+    const body = request.body as { code: string; telegramChatId: string };
+    if (!body?.code || !body?.telegramChatId) {
+      throw new ValidationError('code and telegramChatId are required');
+    }
+
+    const result = await telegramSyncService.confirmSync(body.code, body.telegramChatId);
+    return reply.send(result);
+  }
+
+  /**
+   * Get confirmation status of a Telegram sync code (#260).
+   */
+  async getTelegramSyncStatus(request: FastifyRequest, reply: FastifyReply) {
+    const params = request.params as { code: string };
+    if (!params?.code) {
+      throw new ValidationError('Sync code parameter is required');
+    }
+
+    const result = await telegramSyncService.getSyncStatus(params.code);
+    return reply.send({
+      success: true,
+      ...result,
+    });
+  }
+
+  /**
+   * Unlink a user's Telegram account (#260).
+   */
+  async unlinkTelegram(request: FastifyRequest, reply: FastifyReply) {
+    if (!request.user) {
+      throw new AuthenticationError('User not authenticated');
+    }
+
+    const result = await telegramSyncService.unlinkTelegram(request.user.id);
+    return reply.send(result);
+  }
+
+  /**
    * Send a one-off test ping on a configured channel (used by the
    * onboarding wizard to verify a link before activation).
    */
@@ -78,28 +180,21 @@ export class NotificationsController {
       throw new AuthenticationError('User not authenticated');
     }
 
-    const body = request.body as { channel?: string };
+    const body = request.body as { channel?: 'telegram' | 'push' };
     const channel = body?.channel;
 
-    if (channel !== 'telegram') {
-      throw new ValidationError('channel must be "telegram"');
+    if (channel !== 'telegram' && channel !== 'push') {
+      throw new ValidationError('channel must be "telegram" or "push"');
     }
 
     try {
       const result = await notificationsService.sendTestPing(request.user.id, channel);
       if (!result.success) {
-        // The channel provider (e.g. Telegram) was reachable but the send
-        // itself failed/was rejected — a provider error, not a caller-input
-        // problem (that's the ValidationError below).
         throw new ProviderError(result.message, 'TEST_PING_PROVIDER_FAILURE');
       }
       return reply.send({ success: true, message: result.message });
     } catch (error: any) {
       if (error instanceof ProviderError) throw error;
-      // Preserves the pre-existing 400 status for a failed send (as opposed
-      // to the 502 above for a service-reported-but-not-thrown failure) —
-      // this is a caller-input problem (e.g. no Telegram chat linked yet),
-      // not an upstream provider failure.
       throw new ValidationError(error.message, undefined, 'TEST_PING_FAILED');
     }
   }
