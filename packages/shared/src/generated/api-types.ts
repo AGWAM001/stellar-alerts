@@ -86,6 +86,18 @@ export interface components {
             /** @default 20 */
             pageSize: number;
         };
+        ErrorResponse: {
+            error: {
+                /** @description Stable, machine-readable error code (e.g. VALIDATION_ERROR, NOT_FOUND, CONFLICT). */
+                code: string;
+                /** @description Human-readable, client-safe message. Never contains internal/sensitive detail. */
+                message: string;
+                /** @description Optional structured detail, e.g. field-level validation errors. */
+                details?: unknown;
+                /** @description Correlation id — also returned as the x-request-id response header. */
+                requestId: string;
+            };
+        };
     };
     responses: never;
     parameters: never;

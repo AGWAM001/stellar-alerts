@@ -6,6 +6,7 @@
 
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { notificationsService } from './notifications.service';
+import { AuthenticationError, AuthorizationError, ProviderError, ValidationError } from '../../lib/errors';
 
 export class NotificationsController {
   /**
@@ -13,7 +14,7 @@ export class NotificationsController {
    */
   async updatePreferences(request: FastifyRequest, reply: FastifyReply) {
     if (!request.user) {
-      return reply.status(401).send({ error: 'Unauthorized' });
+      throw new AuthenticationError('User not authenticated');
     }
 
     const body = request.body as any;
@@ -32,33 +33,24 @@ export class NotificationsController {
       });
     } catch (error: any) {
       if (error.message === 'MFA token required') {
-        return reply.status(403).send({
-          error: 'MFA token required',
-          message: 'Multi-factor authentication is enabled. Please provide a valid TOTP token.',
-        });
+        throw new AuthorizationError(
+          'Multi-factor authentication is enabled. Please provide a valid TOTP token.',
+          'MFA_TOKEN_REQUIRED',
+        );
       }
 
       if (error.message === 'Invalid MFA token') {
-        return reply.status(403).send({
-          error: 'Invalid MFA token',
-          message: 'The provided TOTP token is invalid or expired.',
-        });
+        throw new AuthorizationError('The provided TOTP token is invalid or expired.', 'INVALID_MFA_TOKEN');
       }
 
       if (
         error.message.startsWith('Invalid WhatsApp number') ||
         error.message.startsWith('A valid WhatsApp number is required')
       ) {
-        return reply.status(400).send({
-          error: 'Invalid WhatsApp preferences',
-          message: error.message,
-        });
+        throw new ValidationError(error.message, undefined, 'INVALID_WHATSAPP_PREFERENCES');
       }
 
-      return reply.status(500).send({
-        error: 'Failed to update preferences',
-        message: error.message,
-      });
+      throw error;
     }
   }
 
@@ -67,21 +59,14 @@ export class NotificationsController {
    */
   async getPreferences(request: FastifyRequest, reply: FastifyReply) {
     if (!request.user) {
-      return reply.status(401).send({ error: 'Unauthorized' });
+      throw new AuthenticationError('User not authenticated');
     }
 
-    try {
-      const preferences = await notificationsService.getPreferences(request.user.id);
-      return reply.send({
-        success: true,
-        preferences: preferences || {},
-      });
-    } catch (error: any) {
-      return reply.status(500).send({
-        error: 'Failed to get preferences',
-        message: error.message,
-      });
-    }
+    const preferences = await notificationsService.getPreferences(request.user.id);
+    return reply.send({
+      success: true,
+      preferences: preferences || {},
+    });
   }
 
   /**
@@ -90,31 +75,32 @@ export class NotificationsController {
    */
   async sendTestPing(request: FastifyRequest, reply: FastifyReply) {
     if (!request.user) {
-      return reply.status(401).send({ error: 'Unauthorized' });
+      throw new AuthenticationError('User not authenticated');
     }
 
     const body = request.body as { channel?: string };
     const channel = body?.channel;
 
     if (channel !== 'telegram') {
-      return reply.status(400).send({
-        error: 'Invalid channel',
-        message: 'channel must be "telegram"',
-      });
+      throw new ValidationError('channel must be "telegram"');
     }
 
     try {
       const result = await notificationsService.sendTestPing(request.user.id, channel);
-      return reply.status(result.success ? 200 : 502).send({
-        success: result.success,
-        message: result.message,
-      });
+      if (!result.success) {
+        // The channel provider (e.g. Telegram) was reachable but the send
+        // itself failed/was rejected — a provider error, not a caller-input
+        // problem (that's the ValidationError below).
+        throw new ProviderError(result.message, 'TEST_PING_PROVIDER_FAILURE');
+      }
+      return reply.send({ success: true, message: result.message });
     } catch (error: any) {
-      return reply.status(400).send({
-        success: false,
-        error: 'Failed to send test ping',
-        message: error.message,
-      });
+      if (error instanceof ProviderError) throw error;
+      // Preserves the pre-existing 400 status for a failed send (as opposed
+      // to the 502 above for a service-reported-but-not-thrown failure) —
+      // this is a caller-input problem (e.g. no Telegram chat linked yet),
+      // not an upstream provider failure.
+      throw new ValidationError(error.message, undefined, 'TEST_PING_FAILED');
     }
   }
 }

@@ -37,6 +37,7 @@ describe('OpenAPI schema sync & type generator (issue #162)', () => {
       'DIDChallengeInput',
       'DIDVerifyInput',
       'DeadLetterIdParams',
+      'ErrorResponse',
       'ListDeadLettersQuery',
       'RequestLinkInput',
       'SuppressDeadLetterInput',

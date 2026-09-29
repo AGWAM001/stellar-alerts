@@ -12,6 +12,22 @@ import {
 } from './modules/dead-letters/dead-letters.schema';
 
 /**
+ * The one envelope shape every thrown AppError (lib/errors.ts) is
+ * serialized into by app.ts's setErrorHandler — see that file for the
+ * full rationale. Published here as a reusable OpenAPI component so it
+ * can be referenced from any route's 4xx/5xx response documentation
+ * instead of each route describing its own ad-hoc error shape.
+ */
+const errorResponseSchema = z.object({
+  error: z.object({
+    code: z.string().describe('Stable, machine-readable error code (e.g. VALIDATION_ERROR, NOT_FOUND, CONFLICT).'),
+    message: z.string().describe('Human-readable, client-safe message. Never contains internal/sensitive detail.'),
+    details: z.unknown().optional().describe('Optional structured detail, e.g. field-level validation errors.'),
+    requestId: z.string().describe('Correlation id — also returned as the x-request-id response header.'),
+  }),
+});
+
+/**
  * The `@fastify/swagger` registration options shared by `buildApp()`
  * (`app.ts`) and `scripts/generate-types.ts`.
  *
@@ -36,6 +52,7 @@ export const openApiComponentSchemas = {
   SandboxReplayIdParams: z.toJSONSchema(sandboxReplayIdSchema),
   SandboxReplayInput: z.toJSONSchema(sandboxReplayInputSchema),
   ListSandboxReplaysQuery: z.toJSONSchema(listSandboxReplaysQuerySchema),
+  ErrorResponse: z.toJSONSchema(errorResponseSchema),
 };
 
 export const openApiOptions = {

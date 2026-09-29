@@ -18,6 +18,7 @@ import { graphqlRoutes } from './modules/graphql/graphql.routes';
 import { openApiOptions } from './openapi.config';
 
 import { checkRedisReadiness, getRedisStatus } from './lib/redis';
+import { AppError } from './lib/errors';
 
 export { openApiComponentSchemas, openApiOptions } from './openapi.config';
 
@@ -51,6 +52,57 @@ export const buildApp = async () => {
    */
   app.addHook('onRequest', async (request, reply) => {
     void reply.header('x-request-id', request.id);
+  });
+
+  /**
+   * Central error envelope: every thrown AppError (see lib/errors.ts) and
+   * any other unhandled error is serialized into one consistent shape —
+   * { error: { code, message, details?, requestId } } — instead of each
+   * controller hand-rolling its own ad-hoc response body. A message on an
+   * unrecognized/unexpected error is never forwarded to the client (it
+   * could contain internal detail, e.g. a raw Prisma/Postgres error); only
+   * a generic INTERNAL_ERROR is sent, with the real error logged
+   * server-side against the same requestId a client can report back.
+   */
+  app.setErrorHandler((error, request, reply) => {
+    if (error instanceof AppError) {
+      if (error.statusCode >= 500) {
+        request.log.error({ err: error }, error.message);
+      } else {
+        request.log.warn({ err: error }, error.message);
+      }
+      return reply.status(error.statusCode).send({
+        error: {
+          code: error.code,
+          message: error.message,
+          ...(error.details !== undefined ? { details: error.details } : {}),
+          requestId: request.id,
+        },
+      });
+    }
+
+    // Fastify's own schema-based request validation (route `schema.body`/etc.,
+    // distinct from this codebase's usual manual Zod `safeParse` calls).
+    if (Array.isArray((error as any).validation)) {
+      request.log.warn({ err: error }, 'Request schema validation failed');
+      return reply.status(400).send({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Request validation failed',
+          details: (error as any).validation,
+          requestId: request.id,
+        },
+      });
+    }
+
+    request.log.error({ err: error }, 'Unhandled error');
+    return reply.status(500).send({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+        requestId: request.id,
+      },
+    });
   });
 
   await app.register(cors, {
