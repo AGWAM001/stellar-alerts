@@ -2,6 +2,8 @@ import { env } from './config/env';
 import { buildApp } from './app';
 import { prisma, connectWithRetry } from './lib/prisma';
 import { startTelemetry, shutdownTelemetry } from './lib/telemetry';
+import { closeRedisConnections } from './lib/redis';
+import { createGrpcServer } from './modules/grpc/grpc.server';
 
 const start = async () => {
   try {
@@ -12,6 +14,9 @@ const start = async () => {
 
     await app.listen({ port, host: '0.0.0.0' });
     console.log(`🚀 Server listening on http://localhost:${port}`);
+
+    const grpcServer = createGrpcServer(50051);
+    grpcServer.start();
 
     if (process.env.START_WORKER !== 'false') {
       const { runWatcher } = await import('./workers/watcher.worker');
@@ -25,10 +30,17 @@ const start = async () => {
         process.exit(1);
       }, 5000);
 
+      try {
+        grpcServer.stop();
+      } catch (err) {
+        console.error('Error stopping gRPC server:', err);
+      }
+      
       await app.close();
       await prisma.$disconnect();
       await shutdownTelemetry();
-      console.log('✅ Server and Prisma closed cleanly');
+      await closeRedisConnections();
+      console.log('✅ Server, gRPC, Prisma, and Redis closed cleanly');
       process.exit(0);
     };
 

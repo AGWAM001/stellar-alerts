@@ -13,8 +13,13 @@ import { paymentsRoutes } from './modules/payments/payments.routes';
 import { webhooksRoutes } from './modules/webhooks/webhooks.routes';
 import { sorobanStateRoutes } from './modules/soroban-state/soroban-state.routes';
 import { notificationsRoutes } from './modules/notifications/notifications.routes';
+import { alertRulesRoutes } from './modules/alert-rules/alert-rules.routes';
 import { deadLettersRoutes } from './modules/dead-letters/dead-letters.routes';
+import { graphqlRoutes } from './modules/graphql/graphql.routes';
 import { openApiOptions } from './openapi.config';
+
+import { checkRedisReadiness, getRedisStatus } from './lib/redis';
+import { AppError } from './lib/errors';
 
 export { openApiComponentSchemas, openApiOptions } from './openapi.config';
 
@@ -50,6 +55,57 @@ export const buildApp = async () => {
     void reply.header('x-request-id', request.id);
   });
 
+  /**
+   * Central error envelope: every thrown AppError (see lib/errors.ts) and
+   * any other unhandled error is serialized into one consistent shape —
+   * { error: { code, message, details?, requestId } } — instead of each
+   * controller hand-rolling its own ad-hoc response body. A message on an
+   * unrecognized/unexpected error is never forwarded to the client (it
+   * could contain internal detail, e.g. a raw Prisma/Postgres error); only
+   * a generic INTERNAL_ERROR is sent, with the real error logged
+   * server-side against the same requestId a client can report back.
+   */
+  app.setErrorHandler((error, request, reply) => {
+    if (error instanceof AppError) {
+      if (error.statusCode >= 500) {
+        request.log.error({ err: error }, error.message);
+      } else {
+        request.log.warn({ err: error }, error.message);
+      }
+      return reply.status(error.statusCode).send({
+        error: {
+          code: error.code,
+          message: error.message,
+          ...(error.details !== undefined ? { details: error.details } : {}),
+          requestId: request.id,
+        },
+      });
+    }
+
+    // Fastify's own schema-based request validation (route `schema.body`/etc.,
+    // distinct from this codebase's usual manual Zod `safeParse` calls).
+    if (Array.isArray((error as any).validation)) {
+      request.log.warn({ err: error }, 'Request schema validation failed');
+      return reply.status(400).send({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Request validation failed',
+          details: (error as any).validation,
+          requestId: request.id,
+        },
+      });
+    }
+
+    request.log.error({ err: error }, 'Unhandled error');
+    return reply.status(500).send({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+        requestId: request.id,
+      },
+    });
+  });
+
   await app.register(cors, {
     origin: true // Allow all origins for dev, or specify 'http://localhost:3000'
 
@@ -83,12 +139,23 @@ export const buildApp = async () => {
     return { status: 'ok' };
   });
 
+  app.get('/health/ready', async (request, reply) => {
+    const redisHealth = await checkRedisReadiness();
+    const isReady = redisHealth.isReady;
+    return reply.status(isReady ? 200 : 503).send({
+      status: isReady ? 'ready' : 'degraded',
+      redis: redisHealth,
+    });
+  });
+
   app.register(authRoutes);
   app.register(walletsRoutes);
   app.register(paymentsRoutes);
   app.register(webhooksRoutes);
   app.register(notificationsRoutes);
+  app.register(alertRulesRoutes);
   app.register(deadLettersRoutes);
+  await app.register(graphqlRoutes);
 
   return app;
 };
