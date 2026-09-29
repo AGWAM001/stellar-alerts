@@ -402,6 +402,9 @@ export const ModelName = {
   IngestionCursor: 'IngestionCursor',
   Payment: 'Payment',
   NotificationPreference: 'NotificationPreference',
+  DeliveryLog: 'DeliveryLog',
+  PaymentChecksum: 'PaymentChecksum',
+  DailyChecksumRoot: 'DailyChecksumRoot',
   AlertRule: 'AlertRule',
   AlertRuleDispatchLog: 'AlertRuleDispatchLog',
   WhatsAppDeliveryLog: 'WhatsAppDeliveryLog',
@@ -425,6 +428,7 @@ export const ModelName = {
   NotificationDelivery: 'NotificationDelivery',
   NotificationDeliveryAttempt: 'NotificationDeliveryAttempt',
   DeadLetter: 'DeadLetter',
+  WebhookSandboxReplay: 'WebhookSandboxReplay',
   DeadLetterAudit: 'DeadLetterAudit',
   MfaRecoveryCode: 'MfaRecoveryCode',
   RefreshSession: 'RefreshSession',
@@ -444,7 +448,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "wallet" | "ingestionCursor" | "payment" | "notificationPreference" | "alertRule" | "alertRuleDispatchLog" | "whatsAppDeliveryLog" | "webhook" | "webhookLog" | "webhookCircuitBreaker" | "sorobanEventSnapshot" | "sorobanStateAudit" | "sorobanContractSubscription" | "sacTokenMintBurnEvent" | "sacTokenSupply" | "multisigTreasury" | "multisigSignerWatcher" | "pendingMultisigTransaction" | "anchorTransactionWatch" | "dexSwapWatch" | "sorobanTopicIndex" | "sorobanTopicIndexCursor" | "dexSwapEvent" | "securityAuditLog" | "notificationDelivery" | "notificationDeliveryAttempt" | "deadLetter" | "deadLetterAudit" | "mfaRecoveryCode" | "refreshSession" | "refreshTokenHistory"
+    modelProps: "user" | "wallet" | "ingestionCursor" | "payment" | "notificationPreference" | "deliveryLog" | "paymentChecksum" | "dailyChecksumRoot" | "alertRule" | "alertRuleDispatchLog" | "whatsAppDeliveryLog" | "webhook" | "webhookLog" | "webhookCircuitBreaker" | "sorobanEventSnapshot" | "sorobanStateAudit" | "sorobanContractSubscription" | "sacTokenMintBurnEvent" | "sacTokenSupply" | "multisigTreasury" | "multisigSignerWatcher" | "pendingMultisigTransaction" | "anchorTransactionWatch" | "dexSwapWatch" | "sorobanTopicIndex" | "sorobanTopicIndexCursor" | "dexSwapEvent" | "securityAuditLog" | "notificationDelivery" | "notificationDeliveryAttempt" | "deadLetter" | "deadLetterAudit" | "mfaRecoveryCode" | "refreshSession" | "refreshTokenHistory"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -815,6 +819,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.NotificationPreferenceCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.NotificationPreferenceCountAggregateOutputType> | number
+        }
+      }
+    }
+    DeliveryLog: {
+      payload: Prisma.$DeliveryLogPayload<ExtArgs>
+      fields: Prisma.DeliveryLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DeliveryLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DeliveryLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>
+        }
+        findFirst: {
+          args: Prisma.DeliveryLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DeliveryLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>
+        }
+        findMany: {
+          args: Prisma.DeliveryLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>[]
+        }
+        create: {
+          args: Prisma.DeliveryLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>
+        }
+        createMany: {
+          args: Prisma.DeliveryLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DeliveryLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>[]
+        }
+        delete: {
+          args: Prisma.DeliveryLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>
+        }
+        update: {
+          args: Prisma.DeliveryLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.DeliveryLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DeliveryLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DeliveryLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.DeliveryLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryLogPayload>
+        }
+        aggregate: {
+          args: Prisma.DeliveryLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDeliveryLog>
+        }
+        groupBy: {
+          args: Prisma.DeliveryLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DeliveryLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DeliveryLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DeliveryLogCountAggregateOutputType> | number
+        }
+      }
+    }
+    PaymentChecksum: {
+      payload: Prisma.$PaymentChecksumPayload<ExtArgs>
+      fields: Prisma.PaymentChecksumFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PaymentChecksumFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PaymentChecksumFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>
+        }
+        findFirst: {
+          args: Prisma.PaymentChecksumFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PaymentChecksumFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>
+        }
+        findMany: {
+          args: Prisma.PaymentChecksumFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>[]
+        }
+        create: {
+          args: Prisma.PaymentChecksumCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>
+        }
+        createMany: {
+          args: Prisma.PaymentChecksumCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PaymentChecksumCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>[]
+        }
+        delete: {
+          args: Prisma.PaymentChecksumDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>
+        }
+        update: {
+          args: Prisma.PaymentChecksumUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>
+        }
+        deleteMany: {
+          args: Prisma.PaymentChecksumDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PaymentChecksumUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PaymentChecksumUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>[]
+        }
+        upsert: {
+          args: Prisma.PaymentChecksumUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentChecksumPayload>
+        }
+        aggregate: {
+          args: Prisma.PaymentChecksumAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePaymentChecksum>
+        }
+        groupBy: {
+          args: Prisma.PaymentChecksumGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PaymentChecksumGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PaymentChecksumCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PaymentChecksumCountAggregateOutputType> | number
+        }
+      }
+    }
+    DailyChecksumRoot: {
+      payload: Prisma.$DailyChecksumRootPayload<ExtArgs>
+      fields: Prisma.DailyChecksumRootFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DailyChecksumRootFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DailyChecksumRootFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>
+        }
+        findFirst: {
+          args: Prisma.DailyChecksumRootFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DailyChecksumRootFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>
+        }
+        findMany: {
+          args: Prisma.DailyChecksumRootFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>[]
+        }
+        create: {
+          args: Prisma.DailyChecksumRootCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>
+        }
+        createMany: {
+          args: Prisma.DailyChecksumRootCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DailyChecksumRootCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>[]
+        }
+        delete: {
+          args: Prisma.DailyChecksumRootDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>
+        }
+        update: {
+          args: Prisma.DailyChecksumRootUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>
+        }
+        deleteMany: {
+          args: Prisma.DailyChecksumRootDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DailyChecksumRootUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DailyChecksumRootUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>[]
+        }
+        upsert: {
+          args: Prisma.DailyChecksumRootUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DailyChecksumRootPayload>
+        }
+        aggregate: {
+          args: Prisma.DailyChecksumRootAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDailyChecksumRoot>
+        }
+        groupBy: {
+          args: Prisma.DailyChecksumRootGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DailyChecksumRootGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DailyChecksumRootCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DailyChecksumRootCountAggregateOutputType> | number
         }
       }
     }
@@ -2520,6 +2746,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    WebhookSandboxReplay: {
+      payload: Prisma.$WebhookSandboxReplayPayload<ExtArgs>
+      fields: Prisma.WebhookSandboxReplayFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WebhookSandboxReplayFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WebhookSandboxReplayFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>
+        }
+        findFirst: {
+          args: Prisma.WebhookSandboxReplayFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WebhookSandboxReplayFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>
+        }
+        findMany: {
+          args: Prisma.WebhookSandboxReplayFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>[]
+        }
+        create: {
+          args: Prisma.WebhookSandboxReplayCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>
+        }
+        createMany: {
+          args: Prisma.WebhookSandboxReplayCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WebhookSandboxReplayCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>[]
+        }
+        delete: {
+          args: Prisma.WebhookSandboxReplayDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>
+        }
+        update: {
+          args: Prisma.WebhookSandboxReplayUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>
+        }
+        deleteMany: {
+          args: Prisma.WebhookSandboxReplayDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WebhookSandboxReplayUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WebhookSandboxReplayUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>[]
+        }
+        upsert: {
+          args: Prisma.WebhookSandboxReplayUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookSandboxReplayPayload>
+        }
+        aggregate: {
+          args: Prisma.WebhookSandboxReplayAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWebhookSandboxReplay>
+        }
+        groupBy: {
+          args: Prisma.WebhookSandboxReplayGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebhookSandboxReplayGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WebhookSandboxReplayCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebhookSandboxReplayCountAggregateOutputType> | number
+        }
+      }
+    }
     DeadLetterAudit: {
       payload: Prisma.$DeadLetterAuditPayload<ExtArgs>
       fields: Prisma.DeadLetterAuditFieldRefs
@@ -2918,11 +3218,52 @@ export const NotificationPreferenceScalarFieldEnum = {
   emailEnabled: 'emailEnabled',
   whatsappNumber: 'whatsappNumber',
   whatsappEnabled: 'whatsappEnabled',
+  discordWebhookUrl: 'discordWebhookUrl',
+  discordEnabled: 'discordEnabled',
+  slackWebhookUrl: 'slackWebhookUrl',
+  slackEnabled: 'slackEnabled',
   language: 'language',
   filterRules: 'filterRules'
 } as const
 
 export type NotificationPreferenceScalarFieldEnum = (typeof NotificationPreferenceScalarFieldEnum)[keyof typeof NotificationPreferenceScalarFieldEnum]
+
+
+export const DeliveryLogScalarFieldEnum = {
+  id: 'id',
+  paymentId: 'paymentId',
+  channel: 'channel',
+  status: 'status',
+  error: 'error',
+  attempt: 'attempt',
+  createdAt: 'createdAt'
+} as const
+
+export type DeliveryLogScalarFieldEnum = (typeof DeliveryLogScalarFieldEnum)[keyof typeof DeliveryLogScalarFieldEnum]
+
+
+export const PaymentChecksumScalarFieldEnum = {
+  id: 'id',
+  paymentId: 'paymentId',
+  sequence: 'sequence',
+  payloadHash: 'payloadHash',
+  previousHash: 'previousHash',
+  chainHash: 'chainHash',
+  createdAt: 'createdAt'
+} as const
+
+export type PaymentChecksumScalarFieldEnum = (typeof PaymentChecksumScalarFieldEnum)[keyof typeof PaymentChecksumScalarFieldEnum]
+
+
+export const DailyChecksumRootScalarFieldEnum = {
+  id: 'id',
+  date: 'date',
+  merkleRoot: 'merkleRoot',
+  leafCount: 'leafCount',
+  computedAt: 'computedAt'
+} as const
+
+export type DailyChecksumRootScalarFieldEnum = (typeof DailyChecksumRootScalarFieldEnum)[keyof typeof DailyChecksumRootScalarFieldEnum]
 
 
 export const AlertRuleScalarFieldEnum = {
@@ -3260,6 +3601,27 @@ export const DeadLetterScalarFieldEnum = {
 } as const
 
 export type DeadLetterScalarFieldEnum = (typeof DeadLetterScalarFieldEnum)[keyof typeof DeadLetterScalarFieldEnum]
+
+
+export const WebhookSandboxReplayScalarFieldEnum = {
+  id: 'id',
+  deadLetterId: 'deadLetterId',
+  userId: 'userId',
+  replayType: 'replayType',
+  requestEnvelope: 'requestEnvelope',
+  requestHeaders: 'requestHeaders',
+  requestBody: 'requestBody',
+  responseStatus: 'responseStatus',
+  responseHeaders: 'responseHeaders',
+  responseBody: 'responseBody',
+  responseDelayMs: 'responseDelayMs',
+  durationMs: 'durationMs',
+  status: 'status',
+  error: 'error',
+  createdAt: 'createdAt'
+} as const
+
+export type WebhookSandboxReplayScalarFieldEnum = (typeof WebhookSandboxReplayScalarFieldEnum)[keyof typeof WebhookSandboxReplayScalarFieldEnum]
 
 
 export const DeadLetterAuditScalarFieldEnum = {
@@ -3616,6 +3978,9 @@ export type GlobalOmitConfig = {
   ingestionCursor?: Prisma.IngestionCursorOmit
   payment?: Prisma.PaymentOmit
   notificationPreference?: Prisma.NotificationPreferenceOmit
+  deliveryLog?: Prisma.DeliveryLogOmit
+  paymentChecksum?: Prisma.PaymentChecksumOmit
+  dailyChecksumRoot?: Prisma.DailyChecksumRootOmit
   alertRule?: Prisma.AlertRuleOmit
   alertRuleDispatchLog?: Prisma.AlertRuleDispatchLogOmit
   whatsAppDeliveryLog?: Prisma.WhatsAppDeliveryLogOmit
@@ -3639,6 +4004,7 @@ export type GlobalOmitConfig = {
   notificationDelivery?: Prisma.NotificationDeliveryOmit
   notificationDeliveryAttempt?: Prisma.NotificationDeliveryAttemptOmit
   deadLetter?: Prisma.DeadLetterOmit
+  webhookSandboxReplay?: Prisma.WebhookSandboxReplayOmit
   deadLetterAudit?: Prisma.DeadLetterAuditOmit
   mfaRecoveryCode?: Prisma.MfaRecoveryCodeOmit
   refreshSession?: Prisma.RefreshSessionOmit
