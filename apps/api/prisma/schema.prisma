@@ -27,6 +27,7 @@ model User {
   mfaRecoveryCodes   MfaRecoveryCode[]
   notificationDeliveries NotificationDelivery[]
   refreshSessions        RefreshSession[]
+  telegramSyncCodes      TelegramSyncCode[]
 }
 
 model Wallet {
@@ -95,6 +96,12 @@ model NotificationPreference {
   discordEnabled    Boolean @default(false)
   slackWebhookUrl   String?
   slackEnabled      Boolean @default(false)
+  pushChannelAddress String?
+  pushEnabled       Boolean @default(false)
+  receiptPreference String  @default("instant")
+  assetFilters      String[] @default([])
+  minAmount         Decimal?
+  enabledChannels   String[] @default([])
   language          String  @default("EN")
   filterRules       Json?   // Stores filter rule group as JSON
 }
@@ -164,14 +171,20 @@ model AlertRule {
   // Asset codes this rule matches; empty array means "any asset".
   assets     String[]  @default([])
   minAmount  Decimal?
+  maxAmount  Decimal?
+  memo       String?
+  channels   String[]  @default([])
   // Optional FilterRuleGroup JSON for AND/OR-grouped conditions beyond asset/minAmount.
   conditions Json?
+  version    Int       @default(1)
   isActive   Boolean   @default(true)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
   @@index([userId])
   @@index([walletId])
+  @@index([userId, isActive])
+  @@index([walletId, isActive])
 }
 
 // Idempotency record: one row per payment that matched at least one active
@@ -182,6 +195,25 @@ model AlertRuleDispatchLog {
   paymentId      String   @unique
   matchedRuleIds Json
   createdAt      DateTime @default(now())
+}
+
+// One-time expiring sync codes for Telegram account linking (#260).
+// Provides replay protection and confirmation tracking without exposing bot tokens.
+model TelegramSyncCode {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletAddress String?
+  code          String    @unique
+  chatId        String?
+  isUsed        Boolean   @default(false)
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+  confirmedAt   DateTime?
+
+  @@index([userId])
+  @@index([code])
+  @@index([expiresAt])
 }
 
 model WhatsAppDeliveryLog {
