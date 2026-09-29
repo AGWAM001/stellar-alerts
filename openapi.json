@@ -179,6 +179,102 @@
           }
         },
         "additionalProperties": false
+      },
+      "SandboxReplayIdParams": {
+        "type": "object",
+        "properties": {
+          "replayId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "replayId"
+        ],
+        "additionalProperties": false
+      },
+      "SandboxReplayInput": {
+        "type": "object",
+        "properties": {
+          "mockResponse": {
+            "default": {
+              "status": 200,
+              "headers": {},
+              "body": "",
+              "delayMs": 0
+            },
+            "type": "object",
+            "properties": {
+              "status": {
+                "default": 200,
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 599
+              },
+              "headers": {
+                "default": {},
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "body": {
+                "default": "",
+                "type": "string",
+                "maxLength": 65536
+              },
+              "delayMs": {
+                "default": 0,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 5000
+              }
+            },
+            "required": [
+              "status",
+              "headers",
+              "body",
+              "delayMs"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "mockResponse"
+        ],
+        "additionalProperties": false
+      },
+      "ListSandboxReplaysQuery": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "failed"
+            ]
+          },
+          "page": {
+            "default": 1,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "pageSize": {
+            "default": 20,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "page",
+          "pageSize"
+        ],
+        "additionalProperties": false
       }
     }
   },
@@ -203,6 +299,10 @@
     {
       "name": "dead-letters",
       "description": "Inspection, replay and suppression of failed notification deliveries"
+    },
+    {
+      "name": "webhook-sandbox",
+      "description": "Sandbox replay of dead letters against a mock webhook receiver with response inspection"
     }
   ]
 }

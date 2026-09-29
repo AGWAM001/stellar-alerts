@@ -21,8 +21,9 @@ model User {
   anchorWatches         AnchorTransactionWatch[]
   dexSwapWatches        DexSwapWatch[]
   alertRules            AlertRule[]
-  deliveryAttempts NotificationDeliveryAttempt[]
-  deadLetters        DeadLetter[]
+  deliveryAttempts       NotificationDeliveryAttempt[]
+  deadLetters            DeadLetter[]
+  webhookSandboxReplays  WebhookSandboxReplay[]
   mfaRecoveryCodes   MfaRecoveryCode[]
   notificationDeliveries NotificationDelivery[]
   refreshSessions        RefreshSession[]
@@ -72,6 +73,7 @@ model Payment {
   deliveryAttempts NotificationDeliveryAttempt[]
   deadLetters       DeadLetter[]
   deliveries        NotificationDelivery[]
+  checksum          PaymentChecksum?
 
   @@index([txHash])
   @@index([receivedAt])
@@ -81,16 +83,69 @@ model Payment {
 }
 
 model NotificationPreference {
-  id              String  @id @default(cuid())
-  userId          String  @unique
-  user            User    @relation(fields: [userId], references: [id])
-  telegramChatId  String?
-  telegramEnabled Boolean @default(false)
-  emailEnabled    Boolean @default(true)
-  whatsappNumber  String?
-  whatsappEnabled Boolean @default(false)
-  language        String  @default("EN")
-  filterRules     Json?   // Stores filter rule group as JSON
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  user              User    @relation(fields: [userId], references: [id])
+  telegramChatId    String?
+  telegramEnabled   Boolean @default(false)
+  emailEnabled      Boolean @default(true)
+  whatsappNumber    String?
+  whatsappEnabled   Boolean @default(false)
+  discordWebhookUrl String?
+  discordEnabled    Boolean @default(false)
+  slackWebhookUrl   String?
+  slackEnabled      Boolean @default(false)
+  language          String  @default("EN")
+  filterRules       Json?   // Stores filter rule group as JSON
+}
+
+model DeliveryLog {
+  id        String   @id @default(cuid())
+  paymentId String
+  channel   String
+  status    String
+  error     String?
+  attempt   Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@unique([paymentId, channel])
+  @@index([paymentId])
+}
+
+// Append-only hash-pointer audit chain over ingested Payment rows (see
+// docs/payment-checksum-chain.md and services/checksumChain.service.ts).
+// Each row's chainHash commits to the previous row's chainHash plus this
+// row's own payloadHash, so altering or deleting any historical Payment or
+// PaymentChecksum row breaks every chainHash computed after it — detectable
+// by walking the chain and recomputing (verifyChain()). Rows are never
+// updated or deleted after insert, only appended.
+model PaymentChecksum {
+  id           String   @id @default(cuid())
+  paymentId    String   @unique
+  payment      Payment  @relation(fields: [paymentId], references: [id])
+  // Append order (NOT Payment.receivedAt, which is on-chain time set by the
+  // Stellar network and can arrive out of order relative to when we
+  // ingested it). The chain follows ingestion order, since that's the only
+  // order this service can itself guarantee monotonicity for.
+  sequence     Int      @default(autoincrement())
+  payloadHash  String
+  previousHash String
+  chainHash    String
+  createdAt    DateTime @default(now())
+
+  @@index([sequence])
+  @@index([createdAt])
+}
+
+// One row per UTC calendar day, committing to every PaymentChecksum
+// appended that day via a Merkle tree over their payloadHashes (see
+// services/checksumChain.service.ts computeDailyMerkleRoot()).
+model DailyChecksumRoot {
+  id         String   @id @default(cuid())
+  date       String   @unique // UTC day, "YYYY-MM-DD"
+  merkleRoot String
+  leafCount  Int
+  computedAt DateTime @default(now())
 }
 
 // A persisted, user-authored rule that gates payment alert dispatch. Distinct
@@ -536,12 +591,51 @@ model DeadLetter {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   auditLogs    DeadLetterAudit[]
+  sandboxReplays WebhookSandboxReplay[]
 
   @@index([deliveryKey])
   @@index([channel])
   @@index([status])
   @@index([userId])
   @@index([failedAt])
+}
+
+// ── Webhook dead-letter sandbox replay (#456) ───────────────────────────────
+//
+// Every POST /dead-letters/:id/replay-sandbox invocation persists one row:
+// the exact request a webhook receiver would have observed (signed headers,
+// resolved payload envelope, body) and the sandbox receiver's mock response
+// (status, headers, body, delay), plus end-to-end timing breakdown. Requests
+// never leave the API process — the receiver is in-memory — so replays are
+// safe to run against any dead letter without risking double-delivery.
+model WebhookSandboxReplay {
+  id              String   @id @default(cuid())
+  deadLetterId    String
+  deadLetter      DeadLetter @relation(fields: [deadLetterId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // sandbox-replay | webhook-ping — what kind of synthetic request was captured
+  replayType      String   @default("sandbox-replay")
+  // Full dispatch envelope that a receiver would have seen (event, data fields)
+  requestEnvelope Json?
+  requestHeaders  Json
+  // Exact bytes of the JSON request body sent to the receiver
+  requestBody     String
+  // Mock receiver response
+  responseStatus  Int
+  responseHeaders Json
+  responseBody    String
+  responseDelayMs Int      @default(0)
+  // Timing breakdown (ms) captured by the in-process receiver
+  durationMs      Int
+  // Sandbox verdict for quick filtering
+  status          String   @default("completed") // completed | failed
+  error           String?
+  createdAt       DateTime @default(now())
+
+  @@index([deadLetterId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model DeadLetterAudit {
