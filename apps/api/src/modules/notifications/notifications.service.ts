@@ -5,7 +5,7 @@
  * Telegram, Email, WhatsApp, Discord, Slack, and Push Protocol.
  */
 
-import { Prisma } from '../../generated/prisma/client';
+import { Prisma } from '../../../generated/prisma/client';
 import { prisma } from '../../lib/prisma';
 import { mfaService } from '../auth/mfa.service';
 import { encryptPersonalField, decryptPersonalField } from '../../utils/privacy';

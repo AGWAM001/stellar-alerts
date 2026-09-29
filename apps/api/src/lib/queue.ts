@@ -169,7 +169,7 @@ async function getOrCreateCircuitBreaker(
     return circuitBreakers.get(webhookId)!;
   }
 
-  const breaker = new CircuitBreaker(
+  const breaker: CircuitBreaker<any> = new CircuitBreaker(
     async (url: string, payload: string, headers: Record<string, string>) => {
       const response = await fetchWithTimeout(
         url,

@@ -557,8 +557,8 @@ export function parseApprovalEvent(event: any): ParsedSorobanApproval | null {
 
   return {
     contractId,
-    from,
-    spender,
+    from: from || '',
+    spender: spender || '',
     amount: formatTokenAmount(rawAmount),
     rawAmount,
     liveUntilLedger,
@@ -1363,43 +1363,30 @@ export function parseSorobanDiagnosticError(
 
 export function decodeSorobanErrorFromXdr(xdrBase64: string): SorobanErrorInfo | null {
   try {
-    const xdr = StellarSdk.xdr.ScError.fromXDR(Buffer.from(xdrBase64, 'base64'));
-    
-    switch (xdr.switch()) {
-      case StellarSdk.xdr.ScErrorType.sceContract(): {
-        const contractError = xdr.contract();
-        return {
-          type: 'custom_error',
-          code: contractError.value(),
-          message: `Custom contract error ${contractError.value()}`,
-          details: `ScError(Contract, ${contractError.value()})`,
-        };
-      }
-      case StellarSdk.xdr.ScErrorType.scePanic(): {
-        const panic = xdr.panic();
-        return {
-          type: 'panic',
-          code: panic.value(),
-          message: parsePanicCode(panic.value()),
-          details: `ScError(Panic, ${panic.value()})`,
-        };
-      }
-      case StellarSdk.xdr.ScErrorType.sceHostError(): {
-        const hostError = xdr.hostError();
-        return {
-          type: 'host_error',
-          code: hostError.value(),
-          message: parseHostErrorCode(hostError.value()),
-          details: `ScError(HostError, ${hostError.value()})`,
-        };
-      }
-      default:
-        return {
-          type: 'invocation_error',
-          message: 'Unknown Soroban error type',
-          details: xdr.toXDR('base64'),
-        };
+    const scError = StellarSdk.xdr.ScError.fromXDR(Buffer.from(xdrBase64, 'base64'));
+    const errorType = scError.switch();
+    const typeName: string = (errorType as { name?: string }).name ?? String(errorType);
+
+    // The sceContract arm carries a ScErrorCode in contractCode()
+    if (typeName === 'sceContract') {
+      const contractCode = scError.contractCode();
+      return {
+        type: 'custom_error',
+        code: contractCode,
+        message: `Custom contract error (${contractCode})`,
+        details: `ScError(sceContract, ${contractCode})`,
+      };
     }
+
+    // All other system-level errors (sceWasmVm, sceContext, sceStorage, sceObject,
+    // sceCrypto, sceEvents, sceBudget, sceValue, sceAuth) carry a ScErrorCode in code()
+    const code = scError.code() as unknown as { name: string; value: number };
+    return {
+      type: 'host_error',
+      code: code.value,
+      message: `Soroban ${typeName} error: ${code.name} (${code.value})`,
+      details: `ScError(${typeName}, ${code.name})`,
+    };
   } catch {
     return null;
   }
