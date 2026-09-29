@@ -93,17 +93,32 @@ jobs:
           NEXTAUTH_SECRET: "ci-build-dummy-secret-key-123456"
           NEXT_PUBLIC_API_URL: "http://localhost:3001"
 
-  openapi-compatibility:
-    name: OpenAPI Breaking-Change Detection
+  migration-shadow-verification:
+    name: Prisma Migration Shadow-Database Verification
     runs-on: ubuntu-latest
+
+    # Uses its own throwaway Postgres service container, separate from
+    # `validate`'s, since scripts/verify-migrations-shadow.ts creates and
+    # drops disposable databases on it (CREATE DATABASE / DROP DATABASE) as
+    # part of shadow-verifying each migration — kept isolated from the
+    # `validate` job's Postgres so a concurrent DROP DATABASE here can never
+    # race against `validate`'s own test-database usage.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U user"
+          --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          # `git show <base_ref>:openapi.json` needs the merge-base commit of
-          # the PR against its base branch, not just the tip.
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -114,56 +129,16 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run OpenAPI checker test suite
+      - name: Unit test the verification scripts themselves
         run: npm run test:scripts
 
-      - name: Resolve base spec (main) for comparison
-        id: base-spec
+      - name: Static migration lint
+        run: npm run verify:migrations
+
+      - name: Shadow-database migration verification
+        run: npm run verify:migrations:shadow
         env:
-          BASE_REF: ${{ github.base_ref }}
-          BEFORE_SHA: ${{ github.event.before }}
-        run: |
-          set -euo pipefail
-          if [ -n "$BASE_REF" ]; then
-            # pull_request event: diff against the merge base with the target
-            # branch, so the PR is only blamed for changes it actually makes
-            # (not for spec changes main landed after the branch was cut).
-            BASE_SHA="$(git merge-base "origin/${BASE_REF}" HEAD)"
-          elif [ -n "$BEFORE_SHA" ] && git cat-file -e "$BEFORE_SHA" 2>/dev/null; then
-            # push event: diff against the previous commit on this branch
-            BASE_SHA="$BEFORE_SHA"
-          else
-            BASE_SHA="$(git rev-parse origin/main)"
-          fi
-          echo "Comparing against base commit $BASE_SHA"
-          if git show "$BASE_SHA:openapi.json" > /tmp/base-openapi.json 2>/dev/null; then
-            echo "base_spec_exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "base_spec_exists=false" >> "$GITHUB_OUTPUT"
-            echo "No openapi.json on $BASE_SHA — comparison will be skipped"
-          fi
-
-      - name: Detect breaking OpenAPI schema changes
-        if: steps.base-spec.outputs.base_spec_exists == 'true'
-        run: |
-          set -o pipefail
-          npx tsx scripts/check-openapi-breaking-changes.ts \
-            --base-path /tmp/base-openapi.json 2>&1 | tee /tmp/openapi-report.txt
-
-      - name: Add report to the job summary
-        if: always()
-        run: |
-          {
-            echo '## 📇 OpenAPI compatibility report'
-            echo ''
-            if [ -s /tmp/openapi-report.txt ]; then
-              echo '```'
-              cat /tmp/openapi-report.txt
-              echo '```'
-            else
-              echo '_No OpenAPI comparison ran (no spec on base)._'
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
+          SHADOW_DATABASE_URL: "postgresql://user:password@localhost:5432/postgres"
 
   chaos:
     name: Chaos Engineering Fault Injection Suite
