@@ -17,6 +17,14 @@ export interface components {
         VerifyLinkInput: {
             token: string;
         };
+        DIDChallengeInput: {
+            did: string;
+        };
+        DIDVerifyInput: {
+            did: string;
+            challenge: string;
+            signature: string;
+        };
         CreateWalletInput: {
             publicKey: string;
             label?: string;
@@ -27,6 +35,68 @@ export interface components {
             /** Format: uri */
             url: string;
             payloadTemplate?: string;
+        };
+        DeadLetterIdParams: {
+            id: string;
+        };
+        ListDeadLettersQuery: {
+            channel?: string;
+            /** @enum {string} */
+            status?: "pending" | "retried" | "suppressed";
+            q?: string;
+            maxAgeDays?: number;
+            /** @default 1 */
+            page: number;
+            /** @default 20 */
+            pageSize: number;
+        };
+        SuppressDeadLetterInput: {
+            note?: string;
+        };
+        SandboxReplayIdParams: {
+            replayId: string;
+        };
+        SandboxReplayInput: {
+            /**
+             * @default {
+             *       "status": 200,
+             *       "headers": {},
+             *       "body": "",
+             *       "delayMs": 0
+             *     }
+             */
+            mockResponse: {
+                /** @default 200 */
+                status: number;
+                /** @default {} */
+                headers: {
+                    [key: string]: string;
+                };
+                /** @default  */
+                body: string;
+                /** @default 0 */
+                delayMs: number;
+            };
+        };
+        ListSandboxReplaysQuery: {
+            /** @enum {string} */
+            status?: "completed" | "failed";
+            /** @default 1 */
+            page: number;
+            /** @default 20 */
+            pageSize: number;
+        };
+        ErrorResponse: {
+            error: {
+                /** @description Stable, machine-readable error code (e.g. VALIDATION_ERROR, NOT_FOUND, CONFLICT). */
+                code: string;
+                /** @description Human-readable, client-safe message. Never contains internal/sensitive detail. */
+                message: string;
+                /** @description Optional structured detail, e.g. field-level validation errors. */
+                details?: unknown;
+                /** @description Correlation id — also returned as the x-request-id response header. */
+                requestId: string;
+            };
         };
     };
     responses: never;

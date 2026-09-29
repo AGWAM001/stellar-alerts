@@ -12,8 +12,10 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@stellar-alerts/shared": "*",
     "commander": "^13.1.0",
-    "chalk": "^5.4.1"
+    "chalk": "^5.4.1",
+    "stellar-sdk": "^13.3.0"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
