@@ -11,3 +11,4 @@ export * from './NetworkVisualizer3D';
 export * from './AuditWorkspace';
 export * from './EmailTemplatePreview';
 export * from './WalletAlertActivationWizard';
+export { default as TransactionGraphExplorer } from './TransactionGraphExplorer';
