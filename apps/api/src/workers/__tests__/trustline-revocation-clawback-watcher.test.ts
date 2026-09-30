@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest';
 import {
   evaluateRevocationOrClawback,
   processOperation,
@@ -36,7 +37,7 @@ describe('Trustline Revocation and Clawback Event Watcher (#426)', () => {
       createdAt: '2026-09-27T10:05:00.000Z',
     };
 
-    const notifyMock = jest.fn();
+    const notifyMock = vi.fn();
     const alert = await processOperation(op, notifyMock);
 
     expect(alert).not.toBeNull();

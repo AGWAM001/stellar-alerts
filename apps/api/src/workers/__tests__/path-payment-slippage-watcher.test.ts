@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest';
 import {
   calculatePathPaymentSlippage,
   processPathPaymentOperation,
@@ -61,7 +62,7 @@ describe('Path Payment Slippage Alerting Worker (#424)', () => {
       createdAt: new Date(),
     };
 
-    const notifyMock = jest.fn();
+    const notifyMock = vi.fn();
     const alert = await processPathPaymentOperation(op, 1.0, notifyMock);
 
     expect(alert.exceedsThreshold).toBe(false);

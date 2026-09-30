@@ -407,6 +407,7 @@ export const ModelName = {
   DailyChecksumRoot: 'DailyChecksumRoot',
   AlertRule: 'AlertRule',
   AlertRuleDispatchLog: 'AlertRuleDispatchLog',
+  TelegramSyncCode: 'TelegramSyncCode',
   WhatsAppDeliveryLog: 'WhatsAppDeliveryLog',
   Webhook: 'Webhook',
   WebhookLog: 'WebhookLog',
@@ -448,7 +449,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "wallet" | "ingestionCursor" | "payment" | "notificationPreference" | "deliveryLog" | "paymentChecksum" | "dailyChecksumRoot" | "alertRule" | "alertRuleDispatchLog" | "whatsAppDeliveryLog" | "webhook" | "webhookLog" | "webhookCircuitBreaker" | "sorobanEventSnapshot" | "sorobanStateAudit" | "sorobanContractSubscription" | "sacTokenMintBurnEvent" | "sacTokenSupply" | "multisigTreasury" | "multisigSignerWatcher" | "pendingMultisigTransaction" | "anchorTransactionWatch" | "dexSwapWatch" | "sorobanTopicIndex" | "sorobanTopicIndexCursor" | "dexSwapEvent" | "securityAuditLog" | "notificationDelivery" | "notificationDeliveryAttempt" | "deadLetter" | "deadLetterAudit" | "mfaRecoveryCode" | "refreshSession" | "refreshTokenHistory"
+    modelProps: "user" | "wallet" | "ingestionCursor" | "payment" | "notificationPreference" | "deliveryLog" | "paymentChecksum" | "dailyChecksumRoot" | "alertRule" | "alertRuleDispatchLog" | "telegramSyncCode" | "whatsAppDeliveryLog" | "webhook" | "webhookLog" | "webhookCircuitBreaker" | "sorobanEventSnapshot" | "sorobanStateAudit" | "sorobanContractSubscription" | "sacTokenMintBurnEvent" | "sacTokenSupply" | "multisigTreasury" | "multisigSignerWatcher" | "pendingMultisigTransaction" | "anchorTransactionWatch" | "dexSwapWatch" | "sorobanTopicIndex" | "sorobanTopicIndexCursor" | "dexSwapEvent" | "securityAuditLog" | "notificationDelivery" | "notificationDeliveryAttempt" | "deadLetter" | "webhookSandboxReplay" | "deadLetterAudit" | "mfaRecoveryCode" | "refreshSession" | "refreshTokenHistory"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1189,6 +1190,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AlertRuleDispatchLogCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AlertRuleDispatchLogCountAggregateOutputType> | number
+        }
+      }
+    }
+    TelegramSyncCode: {
+      payload: Prisma.$TelegramSyncCodePayload<ExtArgs>
+      fields: Prisma.TelegramSyncCodeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TelegramSyncCodeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelegramSyncCodePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TelegramSyncCodeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelegramSyncCodePayload>
+        }
+        findFirst: {
+          args: Prisma.TelegramSyncCodeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelegramSyncCodePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TelegramSyncCodeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelegramSyncCodePayload>
+        }
+        findMany: {
+          args: Prisma.TelegramSyncCodeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelegramSyncCodePayload>[]
+        }
+        create: {
+          args: Prisma.TelegramSyncCodeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelegramSyncCodePayload>
+        }
+        createMany: {
+          args: Prisma.TelegramSyncCodeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TelegramSyncCodeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelegramSyncCodePayload>[]
+        }
+        delete: {
+          args: Prisma.TelegramSyncCodeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelegramSyncCodePayload>
+        }
+        update: {
+          args: Prisma.TelegramSyncCodeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelegramSyncCodePayload>
+        }
+        deleteMany: {
+          args: Prisma.TelegramSyncCodeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TelegramSyncCodeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TelegramSyncCodeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelegramSyncCodePayload>[]
+        }
+        upsert: {
+          args: Prisma.TelegramSyncCodeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelegramSyncCodePayload>
+        }
+        aggregate: {
+          args: Prisma.TelegramSyncCodeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTelegramSyncCode>
+        }
+        groupBy: {
+          args: Prisma.TelegramSyncCodeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TelegramSyncCodeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TelegramSyncCodeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TelegramSyncCodeCountAggregateOutputType> | number
         }
       }
     }
@@ -3222,6 +3297,12 @@ export const NotificationPreferenceScalarFieldEnum = {
   discordEnabled: 'discordEnabled',
   slackWebhookUrl: 'slackWebhookUrl',
   slackEnabled: 'slackEnabled',
+  pushChannelAddress: 'pushChannelAddress',
+  pushEnabled: 'pushEnabled',
+  receiptPreference: 'receiptPreference',
+  assetFilters: 'assetFilters',
+  minAmount: 'minAmount',
+  enabledChannels: 'enabledChannels',
   language: 'language',
   filterRules: 'filterRules'
 } as const
@@ -3273,7 +3354,11 @@ export const AlertRuleScalarFieldEnum = {
   name: 'name',
   assets: 'assets',
   minAmount: 'minAmount',
+  maxAmount: 'maxAmount',
+  memo: 'memo',
+  channels: 'channels',
   conditions: 'conditions',
+  version: 'version',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -3290,6 +3375,21 @@ export const AlertRuleDispatchLogScalarFieldEnum = {
 } as const
 
 export type AlertRuleDispatchLogScalarFieldEnum = (typeof AlertRuleDispatchLogScalarFieldEnum)[keyof typeof AlertRuleDispatchLogScalarFieldEnum]
+
+
+export const TelegramSyncCodeScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  walletAddress: 'walletAddress',
+  code: 'code',
+  chatId: 'chatId',
+  isUsed: 'isUsed',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  confirmedAt: 'confirmedAt'
+} as const
+
+export type TelegramSyncCodeScalarFieldEnum = (typeof TelegramSyncCodeScalarFieldEnum)[keyof typeof TelegramSyncCodeScalarFieldEnum]
 
 
 export const WhatsAppDeliveryLogScalarFieldEnum = {
@@ -3983,6 +4083,7 @@ export type GlobalOmitConfig = {
   dailyChecksumRoot?: Prisma.DailyChecksumRootOmit
   alertRule?: Prisma.AlertRuleOmit
   alertRuleDispatchLog?: Prisma.AlertRuleDispatchLogOmit
+  telegramSyncCode?: Prisma.TelegramSyncCodeOmit
   whatsAppDeliveryLog?: Prisma.WhatsAppDeliveryLogOmit
   webhook?: Prisma.WebhookOmit
   webhookLog?: Prisma.WebhookLogOmit
