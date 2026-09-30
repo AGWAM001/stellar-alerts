@@ -31,6 +31,19 @@ const envSchema = z.object({
   SOROBAN_INDEXER_BENCHMARK_DATA_ROWS: z.string().optional().default("10000"),
   SOROBAN_STAKING_REWARD_WORKER_ENABLED: z.string().optional().default("true"),
   SOROBAN_SAC_WORKER_ENABLED: z.string().optional().default("true"),
+  // Restoration sentinel (#1005): detects evicted contract instance/code keys
+  // and prices restoration before invocation fails.
+  SOROBAN_RESTORATION_WORKER_ENABLED: z.string().optional().default("true"),
+  SOROBAN_RESTORATION_WORKER_INTERVAL_MS: z.string().optional().default("60000"),
+  SOROBAN_RESTORATION_WARNING_LEDGERS: z.string().optional().default("17280"),
+  SOROBAN_RESTORATION_CRITICAL_LEDGERS: z.string().optional().default("1000"),
+  SOROBAN_RESTORATION_MIN_RESTORE_LEDGERS: z.string().optional().default("4096"),
+  // Impermanent loss watcher (#1007).
+  IL_WATCHER_INTERVAL_MS: z.string().optional().default("60000"),
+  IL_WATCHER_DEFAULT_THRESHOLD_PCT: z.string().optional().default("5"),
+  // Multi-sig signer inactivity / key-weight-decay watcher (#1008).
+  MULTISIG_INACTIVITY_WORKER_ENABLED: z.string().optional().default("true"),
+  MULTISIG_INACTIVITY_INTERVAL_MS: z.string().optional().default("3600000"),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional().default("http://localhost:4318/v1/traces"),
   OTEL_SERVICE_NAME: z.string().optional().default("stellar-alerts-api"),
   // Provider timeouts & deadlines (#303)
@@ -79,6 +92,11 @@ const parseEnv = (): Env => {
     SOROBAN_INDEXER_BENCHMARK_DATA_ROWS: process.env.SOROBAN_INDEXER_BENCHMARK_DATA_ROWS || "10000",
     SOROBAN_STAKING_REWARD_WORKER_ENABLED: process.env.SOROBAN_STAKING_REWARD_WORKER_ENABLED || "true",
     SOROBAN_SAC_WORKER_ENABLED: process.env.SOROBAN_SAC_WORKER_ENABLED || "true",
+    SOROBAN_RESTORATION_WORKER_ENABLED: process.env.SOROBAN_RESTORATION_WORKER_ENABLED || "true",
+    SOROBAN_RESTORATION_WORKER_INTERVAL_MS: process.env.SOROBAN_RESTORATION_WORKER_INTERVAL_MS || "60000",
+    SOROBAN_RESTORATION_WARNING_LEDGERS: process.env.SOROBAN_RESTORATION_WARNING_LEDGERS || "17280",
+    SOROBAN_RESTORATION_CRITICAL_LEDGERS: process.env.SOROBAN_RESTORATION_CRITICAL_LEDGERS || "1000",
+    SOROBAN_RESTORATION_MIN_RESTORE_LEDGERS: process.env.SOROBAN_RESTORATION_MIN_RESTORE_LEDGERS || "4096",
     OTEL_EXPORTER_OTLP_ENDPOINT: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || "http://localhost:4318/v1/traces",
     OTEL_SERVICE_NAME: process.env.OTEL_SERVICE_NAME || "stellar-alerts-api",
   };
