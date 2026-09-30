@@ -74,11 +74,11 @@ export class PaymentsService {
           ? { walletId, wallet: { userId } }
           : { wallet: { userId } };
 
-        console.log(
-          `[PaymentsService] Fetching summary for user \( {userId} \){
-            walletId ? ` (wallet ${walletId})` : ' (all wallets)'
-          }`,
-        );
+         console.log(
+        `[PaymentsService] Fetching summary for user ${userId}${
+        walletId ? ` (wallet ${walletId})` : ' (all wallets)'
+        }`,
+       );
 
         const result = await prismaRead.payment.aggregate({
           where,
