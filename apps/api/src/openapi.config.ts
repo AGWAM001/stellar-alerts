@@ -10,6 +10,12 @@ import {
   sandboxReplayInputSchema,
   listSandboxReplaysQuerySchema,
 } from './modules/dead-letters/dead-letters.schema';
+import {
+  createExportSchema,
+  downloadExportQuerySchema,
+  exportIdSchema,
+  listExportsQuerySchema,
+} from './modules/exports/exports.schema';
 
 /**
  * The one envelope shape every thrown AppError (lib/errors.ts) is
@@ -53,6 +59,10 @@ export const openApiComponentSchemas = {
   SandboxReplayInput: z.toJSONSchema(sandboxReplayInputSchema),
   ListSandboxReplaysQuery: z.toJSONSchema(listSandboxReplaysQuerySchema),
   ErrorResponse: z.toJSONSchema(errorResponseSchema),
+  CreateExportInput: z.toJSONSchema(createExportSchema),
+  ExportIdParams: z.toJSONSchema(exportIdSchema),
+  ListExportsQuery: z.toJSONSchema(listExportsQuerySchema),
+  DownloadExportQuery: z.toJSONSchema(downloadExportQuerySchema),
 };
 
 export const openApiOptions = {
@@ -70,6 +80,7 @@ export const openApiOptions = {
       { name: 'webhooks', description: 'Custom webhook alert endpoint management' },
       { name: 'dead-letters', description: 'Inspection, replay and suppression of failed notification deliveries' },
       { name: 'webhook-sandbox', description: 'Sandbox replay of dead letters against a mock webhook receiver with response inspection' },
+      { name: 'exports', description: 'Asynchronous CSV/PDF export jobs with progress and signed downloads' },
     ],
     components: {
       schemas: openApiComponentSchemas as Record<string, any>,
