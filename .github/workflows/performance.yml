@@ -77,6 +77,12 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      # The API imports @stellar-alerts/shared, whose package "main" points at
+      # dist/index.js — compile it before starting the server, otherwise the
+      # runtime crashes with MODULE_NOT_FOUND and the readiness check times out.
+      - name: Build Shared Package (@stellar-alerts/shared)
+        run: npx tsc -p packages/shared/tsconfig.json
+
       - name: Sync database schema (wait + retry)
         working-directory: apps/api
         # db push targets the job's disposable Postgres service. Wait for
