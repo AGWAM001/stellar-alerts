@@ -41,6 +41,9 @@ const envSchema = z.object({
   // Impermanent loss watcher (#1007).
   IL_WATCHER_INTERVAL_MS: z.string().optional().default("60000"),
   IL_WATCHER_DEFAULT_THRESHOLD_PCT: z.string().optional().default("5"),
+  // Multi-sig signer inactivity / key-weight-decay watcher (#1008).
+  MULTISIG_INACTIVITY_WORKER_ENABLED: z.string().optional().default("true"),
+  MULTISIG_INACTIVITY_INTERVAL_MS: z.string().optional().default("3600000"),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional().default("http://localhost:4318/v1/traces"),
   OTEL_SERVICE_NAME: z.string().optional().default("stellar-alerts-api"),
   // Provider timeouts & deadlines (#303)

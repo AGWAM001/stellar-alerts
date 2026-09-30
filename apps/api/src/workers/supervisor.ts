@@ -150,6 +150,10 @@ export function startSupervisor(): WorkerSupervisor {
     supervisor.spawn('soroban-restoration', 'soroban-restoration.worker');
   }
 
+  if ((env as any).MULTISIG_INACTIVITY_WORKER_ENABLED === 'true') {
+    supervisor.spawn('multisig-inactivity', 'multisig-inactivity-watcher.worker');
+  }
+
   return supervisor;
 }
 
