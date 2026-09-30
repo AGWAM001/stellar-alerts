@@ -15,14 +15,21 @@ import { authRoutes } from './modules/auth/auth.routes';
 import { walletsRoutes } from './modules/wallets/wallets.routes';
 import { paymentsRoutes } from './modules/payments/payments.routes';
 import { webhooksRoutes } from './modules/webhooks/webhooks.routes';
+import { accountRoutes } from './modules/account/account.routes';
+import { registerSecurityHeaders } from './middleware/security.middleware';
+import { registerCorrelation } from './middleware/correlation.middleware';
+import { registerIdempotency } from './middleware/idempotency.middleware';
 import { sorobanStateRoutes } from './modules/soroban-state/soroban-state.routes';
 import { notificationsRoutes } from './modules/notifications/notifications.routes';
 import { alertRulesRoutes } from './modules/alert-rules/alert-rules.routes';
 import { deadLettersRoutes } from './modules/dead-letters/dead-letters.routes';
 import { graphqlRoutes } from './modules/graphql/graphql.routes';
+import { exportsRoutes } from './modules/exports/exports.routes';
 import { openApiOptions } from './openapi.config';
 
 import { checkRedisReadiness, getRedisStatus } from './lib/redis';
+import { dbFailover } from './lib/db-failover';
+import degradedModePlugin from './plugins/degraded-mode';
 import { AppError } from './lib/errors';
 
 export { openApiComponentSchemas, openApiOptions } from './openapi.config';
@@ -44,7 +51,6 @@ export const buildApp = async () => {
 
   await app.register(cors, {
     origin: true // Allow all origins for dev, or specify 'http://localhost:3000'
-
   });
 
   await app.register(rateLimit, {
@@ -70,6 +76,7 @@ export const buildApp = async () => {
 
   await app.register(prismaPlugin);
   await app.register(metricsPlugin);
+  await app.register(degradedModePlugin);
 
   // Issue #64: SSE push endpoint — GET /events
   await app.register(registerSSEPushPlugin);
@@ -123,10 +130,12 @@ export const buildApp = async () => {
   app.register(walletsRoutes);
   app.register(paymentsRoutes);
   app.register(webhooksRoutes);
+  app.register(accountRoutes);
   app.register(notificationsRoutes);
   app.register(alertRulesRoutes);
   app.register(deadLettersRoutes);
   await app.register(graphqlRoutes);
+  app.register(exportsRoutes);
 
   return app;
 };
