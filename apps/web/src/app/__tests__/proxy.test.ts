@@ -40,21 +40,17 @@ vi.mock('next/server', () => {
 
   class _MockNextResponse {
     headers: _MockHeaders;
-    constructor(_opts?: any) { this.headers = new _MockHeaders(); }
-    static next(_init?: any): _MockNextResponse { return new _MockNextResponse(_init); }
+    constructor() { this.headers = new _MockHeaders(); }
+    static next(): _MockNextResponse { return new _MockNextResponse(); }
   }
 
   return { NextRequest: _MockNextRequest, NextResponse: _MockNextResponse };
 });
 
-// Static import — receives mocked next/server because vi.mock is hoisted.
+import { NextRequest as MockNextRequest, NextResponse as MockNextResponse } from 'next/server';
 import { proxy } from '../../../proxy';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-
-// Access the mock constructors via require so we can use instanceof.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { NextResponse: MockNextResponse, NextRequest: MockNextRequest } = require('next/server');
 
 function makeRequest(url = 'https://app.example.com/', headers: Record<string, string> = {}) {
   return new MockNextRequest(url, { headers });
