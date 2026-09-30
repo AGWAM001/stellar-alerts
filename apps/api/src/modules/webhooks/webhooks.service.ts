@@ -172,14 +172,20 @@ export class WebhooksService {
     ].join(':');
     const secret = cryptoVault.decrypt(encrypted);
 
-    const payload = JSON.stringify({
+    let rawPayload: Record<string, any> = {
       event: 'webhook.ping',
       timestamp: new Date().toISOString(),
       data: {
         webhookId: webhook.id,
         message: 'Test ping dispatched from Stellar Alerts',
       },
-    });
+    };
+
+    if (webhook.payloadTemplate) {
+      rawPayload = dynamicPayloadTransformer.transform(rawPayload, webhook.payloadTemplate);
+    }
+
+    const payload = JSON.stringify(rawPayload);
 
     // Decrypt the stored vault secret before signing
     const rawSecret = decryptFromString(webhook.secret);
