@@ -20,6 +20,8 @@ import { exportsRoutes } from './modules/exports/exports.routes';
 import { openApiOptions } from './openapi.config';
 
 import { checkRedisReadiness, getRedisStatus } from './lib/redis';
+import { dbFailover } from './lib/db-failover';
+import degradedModePlugin from './plugins/degraded-mode';
 import { AppError } from './lib/errors';
 
 export { openApiComponentSchemas, openApiOptions } from './openapi.config';
@@ -135,6 +137,7 @@ export const buildApp = async () => {
 
   await app.register(prismaPlugin);
   await app.register(metricsPlugin);
+  await app.register(degradedModePlugin);
 
   app.get('/health', async () => {
     return { status: 'ok' };
@@ -142,10 +145,14 @@ export const buildApp = async () => {
 
   app.get('/health/ready', async (request, reply) => {
     const redisHealth = await checkRedisReadiness();
+    const database = await dbFailover.getStatus();
     const isReady = redisHealth.isReady;
+    // Read-only mode still serves reads, so the pod stays in rotation; it is reported as degraded.
+    const degraded = !isReady || database.state === 'DEGRADED_READ_ONLY';
     return reply.status(isReady ? 200 : 503).send({
-      status: isReady ? 'ready' : 'degraded',
+      status: degraded ? 'degraded' : 'ready',
       redis: redisHealth,
+      database,
     });
   });
 
