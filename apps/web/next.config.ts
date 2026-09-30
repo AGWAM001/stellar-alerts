@@ -29,15 +29,69 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  compress: true,
+
   async headers() {
     return [
       {
-        // Apply to all routes.
-        source: '/(.*)',
+        source: '/:path*',
         headers: securityHeaders,
+      },
+      {
+        source: "/manifest.json",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "application/manifest+json",
+          },
+        ],
+      },
+      {
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate",
+          },
+          {
+            key: "Service-Worker-Allowed",
+            value: "/",
+          },
+        ],
+      },
+      {
+        source: "/:path((?!api).*)*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, stale-while-revalidate=86400",
+          },
+        ],
+      },
+      {
+        source: "/offline.html",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate",
+          },
+        ],
       },
     ];
   },
+
+  async rewrites() {
+    return {
+      afterFiles: [
+        {
+          source: "/offline",
+          destination: "/offline.html",
+        },
+      ],
+    };
+  },
+
+  reactStrictMode: true,
 };
 
 export default nextConfig;
