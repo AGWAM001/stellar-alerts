@@ -38,6 +38,9 @@ const envSchema = z.object({
   SOROBAN_RESTORATION_WARNING_LEDGERS: z.string().optional().default("17280"),
   SOROBAN_RESTORATION_CRITICAL_LEDGERS: z.string().optional().default("1000"),
   SOROBAN_RESTORATION_MIN_RESTORE_LEDGERS: z.string().optional().default("4096"),
+  // Impermanent loss watcher (#1007).
+  IL_WATCHER_INTERVAL_MS: z.string().optional().default("60000"),
+  IL_WATCHER_DEFAULT_THRESHOLD_PCT: z.string().optional().default("5"),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional().default("http://localhost:4318/v1/traces"),
   OTEL_SERVICE_NAME: z.string().optional().default("stellar-alerts-api"),
   // Provider timeouts & deadlines (#303)
