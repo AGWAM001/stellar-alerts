@@ -146,6 +146,10 @@ export function startSupervisor(): WorkerSupervisor {
     supervisor.spawn('soroban-sac', 'soroban-sac.worker');
   }
 
+  if ((env as any).SOROBAN_RESTORATION_WORKER_ENABLED === 'true') {
+    supervisor.spawn('soroban-restoration', 'soroban-restoration.worker');
+  }
+
   return supervisor;
 }
 
