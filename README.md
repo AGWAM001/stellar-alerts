@@ -31,6 +31,10 @@ Stellar Alerts monitors registered Stellar public wallets in real time for incom
 - 📊 **Modular React Dashboard**: Monitored wallets, summary statistics, and real-time payment history powered by Next.js and Tailwind CSS, organized into feature routes (`/dashboard`, `/inspectors`, `/settings`, `/onboarding`, `/docs`).
 - 🧙 **Resumable Onboarding Wizard**: A three-step freelancer setup flow (wallet connection → Telegram linking → notification preferences) with a test-ping check before activation; progress persists to `localStorage` so a refresh resumes exactly where the user left off.
 - 🧪 **Automated Vitest Test Suite**: Unit testing framework with 100% passing test coverage (`npm run test:api`).
+- 🔄 **GraphQL Subscriptions**: Real-time event streaming via GraphQL with Apollo Server and Redis Pub/Sub for filtered transaction and contract events over WebSockets.
+- 📡 **gRPC Streaming Interface**: Enterprise-grade streaming server with Proto3 definitions for ledger events, wallet alert subscriptions, and low-latency bidirectional notification feeds.
+- 🖥️ **Interactive TUI Dashboard**: React Ink terminal interface for real-time monitoring of ingested transactions, queue depths, delivery latency, and worker status.
+- 🤖 **Headless Daemon Mode**: Background alert processing with automated service generation for systemd (Linux) and launchd (macOS).
 
 ---
 
@@ -76,12 +80,60 @@ Or launch components individually:
 npm run dev:api     # Fastify REST API on http://localhost:3001
 npm run dev:worker  # Stellar Horizon & Soroban Ingestion Worker
 npm run dev:web     # Next.js Dashboard on http://localhost:3000
+npm run cli:tui     # Interactive terminal dashboard
+npm run daemon:start # Start headless daemon mode
 ```
 
 ### 5. Test Live Stellar Payment Ingestion
 Fund a fresh keypair on Stellar Testnet via Friendbot and verify automated ingestion into PostgreSQL:
 ```bash
 npx tsx --env-file=apps/api/.env apps/api/scripts/seed-and-trigger-payment.ts
+```
+
+### 6. Streaming Interfaces & Daemon Mode
+
+#### GraphQL Subscriptions
+Access real-time event streaming via GraphQL at `http://localhost:3001/graphql`:
+```graphql
+subscription {
+  paymentStream(filter: { walletId: "your-wallet-id" }) {
+    id
+    fromAddress
+    amount
+    asset
+    receivedAt
+  }
+}
+```
+
+#### gRPC Streaming
+Connect to the gRPC server on port 50051 for enterprise-grade streaming:
+```bash
+# Using grpcurl
+grpcurl -plaintext localhost:50051 stellar.LedgerService/StreamLedgerEvents
+```
+
+#### Interactive TUI Dashboard
+Launch the terminal-based real-time monitoring dashboard:
+```bash
+npm run cli:tui
+```
+
+#### Headless Daemon Mode
+Install and run as a system service:
+
+**Linux (systemd):**
+```bash
+npm run daemon:install:systemd
+sudo systemctl daemon-reload
+sudo systemctl enable stellar-alerts
+sudo systemctl start stellar-alerts
+```
+
+**macOS (launchd):**
+```bash
+npm run daemon:install:launchd
+launchctl load ~/Library/LaunchAgents/com.stellaralerts.daemon.plist
 ```
 
 ---

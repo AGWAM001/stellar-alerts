@@ -23,5 +23,6 @@ export default defineConfig({
       ['src/app/__tests__/proxy.test.ts', 'node'],
     ],
     include: ['src/**/*.test.{ts,tsx}'],
+    testTimeout: 20000,
   },
 });

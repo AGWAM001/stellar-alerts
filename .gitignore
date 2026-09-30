@@ -14,6 +14,8 @@ scripts/
 !scripts/k6-load-test.js
 !scripts/verify-migrations.ts
 !scripts/verify-migrations.test.ts
+!scripts/verify-migrations-shadow.ts
+!scripts/verify-migrations-shadow.test.ts
 !scripts/security-audit.ts
 !scripts/check-prisma-drift.ts
 # Note: a `!scripts/<file>` negation cannot un-ignore a file inside an
@@ -25,3 +27,19 @@ apps/**/.env.local
 
 target/
 Cargo.lock
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+crash.log
+crash.*.log
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform/terraform.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
