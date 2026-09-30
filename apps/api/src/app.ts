@@ -16,6 +16,7 @@ import { notificationsRoutes } from './modules/notifications/notifications.route
 import { alertRulesRoutes } from './modules/alert-rules/alert-rules.routes';
 import { deadLettersRoutes } from './modules/dead-letters/dead-letters.routes';
 import { graphqlRoutes } from './modules/graphql/graphql.routes';
+import { exportsRoutes } from './modules/exports/exports.routes';
 import { openApiOptions } from './openapi.config';
 
 import { checkRedisReadiness, getRedisStatus } from './lib/redis';
@@ -156,6 +157,7 @@ export const buildApp = async () => {
   app.register(alertRulesRoutes);
   app.register(deadLettersRoutes);
   await app.register(graphqlRoutes);
+  app.register(exportsRoutes);
 
   return app;
 };
