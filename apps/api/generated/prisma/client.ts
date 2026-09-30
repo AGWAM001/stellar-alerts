@@ -70,6 +70,16 @@ export type NotificationPreference = Prisma.NotificationPreferenceModel
  */
 export type DeliveryLog = Prisma.DeliveryLogModel
 /**
+ * Model PaymentChecksum
+ * 
+ */
+export type PaymentChecksum = Prisma.PaymentChecksumModel
+/**
+ * Model DailyChecksumRoot
+ * 
+ */
+export type DailyChecksumRoot = Prisma.DailyChecksumRootModel
+/**
  * Model AlertRule
  * 
  */
@@ -79,6 +89,11 @@ export type AlertRule = Prisma.AlertRuleModel
  * 
  */
 export type AlertRuleDispatchLog = Prisma.AlertRuleDispatchLogModel
+/**
+ * Model TelegramSyncCode
+ * 
+ */
+export type TelegramSyncCode = Prisma.TelegramSyncCodeModel
 /**
  * Model WhatsAppDeliveryLog
  * 
@@ -99,6 +114,11 @@ export type WebhookLog = Prisma.WebhookLogModel
  * 
  */
 export type WebhookCircuitBreaker = Prisma.WebhookCircuitBreakerModel
+/**
+ * Model ExportJob
+ * 
+ */
+export type ExportJob = Prisma.ExportJobModel
 /**
  * Model SorobanEventSnapshot
  * 
@@ -184,6 +204,11 @@ export type NotificationDeliveryAttempt = Prisma.NotificationDeliveryAttemptMode
  * 
  */
 export type DeadLetter = Prisma.DeadLetterModel
+/**
+ * Model WebhookSandboxReplay
+ * 
+ */
+export type WebhookSandboxReplay = Prisma.WebhookSandboxReplayModel
 /**
  * Model DeadLetterAudit
  * 

@@ -20,8 +20,18 @@ export type NotificationPreferenceModel = runtime.Types.Result.DefaultSelection<
 
 export type AggregateNotificationPreference = {
   _count: NotificationPreferenceCountAggregateOutputType | null
+  _avg: NotificationPreferenceAvgAggregateOutputType | null
+  _sum: NotificationPreferenceSumAggregateOutputType | null
   _min: NotificationPreferenceMinAggregateOutputType | null
   _max: NotificationPreferenceMaxAggregateOutputType | null
+}
+
+export type NotificationPreferenceAvgAggregateOutputType = {
+  minAmount: runtime.Decimal | null
+}
+
+export type NotificationPreferenceSumAggregateOutputType = {
+  minAmount: runtime.Decimal | null
 }
 
 export type NotificationPreferenceMinAggregateOutputType = {
@@ -36,6 +46,10 @@ export type NotificationPreferenceMinAggregateOutputType = {
   discordEnabled: boolean | null
   slackWebhookUrl: string | null
   slackEnabled: boolean | null
+  pushChannelAddress: string | null
+  pushEnabled: boolean | null
+  receiptPreference: string | null
+  minAmount: runtime.Decimal | null
   language: string | null
 }
 
@@ -51,6 +65,10 @@ export type NotificationPreferenceMaxAggregateOutputType = {
   discordEnabled: boolean | null
   slackWebhookUrl: string | null
   slackEnabled: boolean | null
+  pushChannelAddress: string | null
+  pushEnabled: boolean | null
+  receiptPreference: string | null
+  minAmount: runtime.Decimal | null
   language: string | null
 }
 
@@ -66,11 +84,25 @@ export type NotificationPreferenceCountAggregateOutputType = {
   discordEnabled: number
   slackWebhookUrl: number
   slackEnabled: number
+  pushChannelAddress: number
+  pushEnabled: number
+  receiptPreference: number
+  assetFilters: number
+  minAmount: number
+  enabledChannels: number
   language: number
   filterRules: number
   _all: number
 }
 
+
+export type NotificationPreferenceAvgAggregateInputType = {
+  minAmount?: true
+}
+
+export type NotificationPreferenceSumAggregateInputType = {
+  minAmount?: true
+}
 
 export type NotificationPreferenceMinAggregateInputType = {
   id?: true
@@ -84,6 +116,10 @@ export type NotificationPreferenceMinAggregateInputType = {
   discordEnabled?: true
   slackWebhookUrl?: true
   slackEnabled?: true
+  pushChannelAddress?: true
+  pushEnabled?: true
+  receiptPreference?: true
+  minAmount?: true
   language?: true
 }
 
@@ -99,6 +135,10 @@ export type NotificationPreferenceMaxAggregateInputType = {
   discordEnabled?: true
   slackWebhookUrl?: true
   slackEnabled?: true
+  pushChannelAddress?: true
+  pushEnabled?: true
+  receiptPreference?: true
+  minAmount?: true
   language?: true
 }
 
@@ -114,6 +154,12 @@ export type NotificationPreferenceCountAggregateInputType = {
   discordEnabled?: true
   slackWebhookUrl?: true
   slackEnabled?: true
+  pushChannelAddress?: true
+  pushEnabled?: true
+  receiptPreference?: true
+  assetFilters?: true
+  minAmount?: true
+  enabledChannels?: true
   language?: true
   filterRules?: true
   _all?: true
@@ -157,6 +203,18 @@ export type NotificationPreferenceAggregateArgs<ExtArgs extends runtime.Types.Ex
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: NotificationPreferenceAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: NotificationPreferenceSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: NotificationPreferenceMinAggregateInputType
@@ -187,6 +245,8 @@ export type NotificationPreferenceGroupByArgs<ExtArgs extends runtime.Types.Exte
   take?: number
   skip?: number
   _count?: NotificationPreferenceCountAggregateInputType | true
+  _avg?: NotificationPreferenceAvgAggregateInputType
+  _sum?: NotificationPreferenceSumAggregateInputType
   _min?: NotificationPreferenceMinAggregateInputType
   _max?: NotificationPreferenceMaxAggregateInputType
 }
@@ -203,9 +263,17 @@ export type NotificationPreferenceGroupByOutputType = {
   discordEnabled: boolean
   slackWebhookUrl: string | null
   slackEnabled: boolean
+  pushChannelAddress: string | null
+  pushEnabled: boolean
+  receiptPreference: string
+  assetFilters: string[]
+  minAmount: runtime.Decimal | null
+  enabledChannels: string[]
   language: string
   filterRules: runtime.JsonValue | null
   _count: NotificationPreferenceCountAggregateOutputType | null
+  _avg: NotificationPreferenceAvgAggregateOutputType | null
+  _sum: NotificationPreferenceSumAggregateOutputType | null
   _min: NotificationPreferenceMinAggregateOutputType | null
   _max: NotificationPreferenceMaxAggregateOutputType | null
 }
@@ -240,6 +308,12 @@ export type NotificationPreferenceWhereInput = {
   discordEnabled?: Prisma.BoolFilter<"NotificationPreference"> | boolean
   slackWebhookUrl?: Prisma.StringNullableFilter<"NotificationPreference"> | string | null
   slackEnabled?: Prisma.BoolFilter<"NotificationPreference"> | boolean
+  pushChannelAddress?: Prisma.StringNullableFilter<"NotificationPreference"> | string | null
+  pushEnabled?: Prisma.BoolFilter<"NotificationPreference"> | boolean
+  receiptPreference?: Prisma.StringFilter<"NotificationPreference"> | string
+  assetFilters?: Prisma.StringNullableListFilter<"NotificationPreference">
+  minAmount?: Prisma.DecimalNullableFilter<"NotificationPreference"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  enabledChannels?: Prisma.StringNullableListFilter<"NotificationPreference">
   language?: Prisma.StringFilter<"NotificationPreference"> | string
   filterRules?: Prisma.JsonNullableFilter<"NotificationPreference">
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -257,6 +331,12 @@ export type NotificationPreferenceOrderByWithRelationInput = {
   discordEnabled?: Prisma.SortOrder
   slackWebhookUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   slackEnabled?: Prisma.SortOrder
+  pushChannelAddress?: Prisma.SortOrderInput | Prisma.SortOrder
+  pushEnabled?: Prisma.SortOrder
+  receiptPreference?: Prisma.SortOrder
+  assetFilters?: Prisma.SortOrder
+  minAmount?: Prisma.SortOrderInput | Prisma.SortOrder
+  enabledChannels?: Prisma.SortOrder
   language?: Prisma.SortOrder
   filterRules?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -277,6 +357,12 @@ export type NotificationPreferenceWhereUniqueInput = Prisma.AtLeast<{
   discordEnabled?: Prisma.BoolFilter<"NotificationPreference"> | boolean
   slackWebhookUrl?: Prisma.StringNullableFilter<"NotificationPreference"> | string | null
   slackEnabled?: Prisma.BoolFilter<"NotificationPreference"> | boolean
+  pushChannelAddress?: Prisma.StringNullableFilter<"NotificationPreference"> | string | null
+  pushEnabled?: Prisma.BoolFilter<"NotificationPreference"> | boolean
+  receiptPreference?: Prisma.StringFilter<"NotificationPreference"> | string
+  assetFilters?: Prisma.StringNullableListFilter<"NotificationPreference">
+  minAmount?: Prisma.DecimalNullableFilter<"NotificationPreference"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  enabledChannels?: Prisma.StringNullableListFilter<"NotificationPreference">
   language?: Prisma.StringFilter<"NotificationPreference"> | string
   filterRules?: Prisma.JsonNullableFilter<"NotificationPreference">
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -294,11 +380,19 @@ export type NotificationPreferenceOrderByWithAggregationInput = {
   discordEnabled?: Prisma.SortOrder
   slackWebhookUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   slackEnabled?: Prisma.SortOrder
+  pushChannelAddress?: Prisma.SortOrderInput | Prisma.SortOrder
+  pushEnabled?: Prisma.SortOrder
+  receiptPreference?: Prisma.SortOrder
+  assetFilters?: Prisma.SortOrder
+  minAmount?: Prisma.SortOrderInput | Prisma.SortOrder
+  enabledChannels?: Prisma.SortOrder
   language?: Prisma.SortOrder
   filterRules?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.NotificationPreferenceCountOrderByAggregateInput
+  _avg?: Prisma.NotificationPreferenceAvgOrderByAggregateInput
   _max?: Prisma.NotificationPreferenceMaxOrderByAggregateInput
   _min?: Prisma.NotificationPreferenceMinOrderByAggregateInput
+  _sum?: Prisma.NotificationPreferenceSumOrderByAggregateInput
 }
 
 export type NotificationPreferenceScalarWhereWithAggregatesInput = {
@@ -316,6 +410,12 @@ export type NotificationPreferenceScalarWhereWithAggregatesInput = {
   discordEnabled?: Prisma.BoolWithAggregatesFilter<"NotificationPreference"> | boolean
   slackWebhookUrl?: Prisma.StringNullableWithAggregatesFilter<"NotificationPreference"> | string | null
   slackEnabled?: Prisma.BoolWithAggregatesFilter<"NotificationPreference"> | boolean
+  pushChannelAddress?: Prisma.StringNullableWithAggregatesFilter<"NotificationPreference"> | string | null
+  pushEnabled?: Prisma.BoolWithAggregatesFilter<"NotificationPreference"> | boolean
+  receiptPreference?: Prisma.StringWithAggregatesFilter<"NotificationPreference"> | string
+  assetFilters?: Prisma.StringNullableListFilter<"NotificationPreference">
+  minAmount?: Prisma.DecimalNullableWithAggregatesFilter<"NotificationPreference"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  enabledChannels?: Prisma.StringNullableListFilter<"NotificationPreference">
   language?: Prisma.StringWithAggregatesFilter<"NotificationPreference"> | string
   filterRules?: Prisma.JsonNullableWithAggregatesFilter<"NotificationPreference">
 }
@@ -331,6 +431,12 @@ export type NotificationPreferenceCreateInput = {
   discordEnabled?: boolean
   slackWebhookUrl?: string | null
   slackEnabled?: boolean
+  pushChannelAddress?: string | null
+  pushEnabled?: boolean
+  receiptPreference?: string
+  assetFilters?: Prisma.NotificationPreferenceCreateassetFiltersInput | string[]
+  minAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  enabledChannels?: Prisma.NotificationPreferenceCreateenabledChannelsInput | string[]
   language?: string
   filterRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   user: Prisma.UserCreateNestedOneWithoutNotifyPrefsInput
@@ -348,6 +454,12 @@ export type NotificationPreferenceUncheckedCreateInput = {
   discordEnabled?: boolean
   slackWebhookUrl?: string | null
   slackEnabled?: boolean
+  pushChannelAddress?: string | null
+  pushEnabled?: boolean
+  receiptPreference?: string
+  assetFilters?: Prisma.NotificationPreferenceCreateassetFiltersInput | string[]
+  minAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  enabledChannels?: Prisma.NotificationPreferenceCreateenabledChannelsInput | string[]
   language?: string
   filterRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
@@ -363,6 +475,12 @@ export type NotificationPreferenceUpdateInput = {
   discordEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   slackWebhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pushChannelAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pushEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  receiptPreference?: Prisma.StringFieldUpdateOperationsInput | string
+  assetFilters?: Prisma.NotificationPreferenceUpdateassetFiltersInput | string[]
+  minAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  enabledChannels?: Prisma.NotificationPreferenceUpdateenabledChannelsInput | string[]
   language?: Prisma.StringFieldUpdateOperationsInput | string
   filterRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   user?: Prisma.UserUpdateOneRequiredWithoutNotifyPrefsNestedInput
@@ -380,6 +498,12 @@ export type NotificationPreferenceUncheckedUpdateInput = {
   discordEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   slackWebhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pushChannelAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pushEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  receiptPreference?: Prisma.StringFieldUpdateOperationsInput | string
+  assetFilters?: Prisma.NotificationPreferenceUpdateassetFiltersInput | string[]
+  minAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  enabledChannels?: Prisma.NotificationPreferenceUpdateenabledChannelsInput | string[]
   language?: Prisma.StringFieldUpdateOperationsInput | string
   filterRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
@@ -396,6 +520,12 @@ export type NotificationPreferenceCreateManyInput = {
   discordEnabled?: boolean
   slackWebhookUrl?: string | null
   slackEnabled?: boolean
+  pushChannelAddress?: string | null
+  pushEnabled?: boolean
+  receiptPreference?: string
+  assetFilters?: Prisma.NotificationPreferenceCreateassetFiltersInput | string[]
+  minAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  enabledChannels?: Prisma.NotificationPreferenceCreateenabledChannelsInput | string[]
   language?: string
   filterRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
@@ -411,6 +541,12 @@ export type NotificationPreferenceUpdateManyMutationInput = {
   discordEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   slackWebhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pushChannelAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pushEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  receiptPreference?: Prisma.StringFieldUpdateOperationsInput | string
+  assetFilters?: Prisma.NotificationPreferenceUpdateassetFiltersInput | string[]
+  minAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  enabledChannels?: Prisma.NotificationPreferenceUpdateenabledChannelsInput | string[]
   language?: Prisma.StringFieldUpdateOperationsInput | string
   filterRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
@@ -427,6 +563,12 @@ export type NotificationPreferenceUncheckedUpdateManyInput = {
   discordEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   slackWebhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pushChannelAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pushEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  receiptPreference?: Prisma.StringFieldUpdateOperationsInput | string
+  assetFilters?: Prisma.NotificationPreferenceUpdateassetFiltersInput | string[]
+  minAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  enabledChannels?: Prisma.NotificationPreferenceUpdateenabledChannelsInput | string[]
   language?: Prisma.StringFieldUpdateOperationsInput | string
   filterRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
@@ -434,6 +576,14 @@ export type NotificationPreferenceUncheckedUpdateManyInput = {
 export type NotificationPreferenceNullableScalarRelationFilter = {
   is?: Prisma.NotificationPreferenceWhereInput | null
   isNot?: Prisma.NotificationPreferenceWhereInput | null
+}
+
+export type StringNullableListFilter<$PrismaModel = never> = {
+  equals?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
+  has?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
+  hasEvery?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
+  hasSome?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
+  isEmpty?: boolean
 }
 
 export type NotificationPreferenceCountOrderByAggregateInput = {
@@ -448,8 +598,18 @@ export type NotificationPreferenceCountOrderByAggregateInput = {
   discordEnabled?: Prisma.SortOrder
   slackWebhookUrl?: Prisma.SortOrder
   slackEnabled?: Prisma.SortOrder
+  pushChannelAddress?: Prisma.SortOrder
+  pushEnabled?: Prisma.SortOrder
+  receiptPreference?: Prisma.SortOrder
+  assetFilters?: Prisma.SortOrder
+  minAmount?: Prisma.SortOrder
+  enabledChannels?: Prisma.SortOrder
   language?: Prisma.SortOrder
   filterRules?: Prisma.SortOrder
+}
+
+export type NotificationPreferenceAvgOrderByAggregateInput = {
+  minAmount?: Prisma.SortOrder
 }
 
 export type NotificationPreferenceMaxOrderByAggregateInput = {
@@ -464,6 +624,10 @@ export type NotificationPreferenceMaxOrderByAggregateInput = {
   discordEnabled?: Prisma.SortOrder
   slackWebhookUrl?: Prisma.SortOrder
   slackEnabled?: Prisma.SortOrder
+  pushChannelAddress?: Prisma.SortOrder
+  pushEnabled?: Prisma.SortOrder
+  receiptPreference?: Prisma.SortOrder
+  minAmount?: Prisma.SortOrder
   language?: Prisma.SortOrder
 }
 
@@ -479,7 +643,15 @@ export type NotificationPreferenceMinOrderByAggregateInput = {
   discordEnabled?: Prisma.SortOrder
   slackWebhookUrl?: Prisma.SortOrder
   slackEnabled?: Prisma.SortOrder
+  pushChannelAddress?: Prisma.SortOrder
+  pushEnabled?: Prisma.SortOrder
+  receiptPreference?: Prisma.SortOrder
+  minAmount?: Prisma.SortOrder
   language?: Prisma.SortOrder
+}
+
+export type NotificationPreferenceSumOrderByAggregateInput = {
+  minAmount?: Prisma.SortOrder
 }
 
 export type NotificationPreferenceCreateNestedOneWithoutUserInput = {
@@ -514,6 +686,32 @@ export type NotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.NotificationPreferenceUpdateToOneWithWhereWithoutUserInput, Prisma.NotificationPreferenceUpdateWithoutUserInput>, Prisma.NotificationPreferenceUncheckedUpdateWithoutUserInput>
 }
 
+export type NotificationPreferenceCreateassetFiltersInput = {
+  set: string[]
+}
+
+export type NotificationPreferenceCreateenabledChannelsInput = {
+  set: string[]
+}
+
+export type NotificationPreferenceUpdateassetFiltersInput = {
+  set?: string[]
+  push?: string | string[]
+}
+
+export type NullableDecimalFieldUpdateOperationsInput = {
+  set?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  increment?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  decrement?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  multiply?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
+}
+
+export type NotificationPreferenceUpdateenabledChannelsInput = {
+  set?: string[]
+  push?: string | string[]
+}
+
 export type NotificationPreferenceCreateWithoutUserInput = {
   id?: string
   telegramChatId?: string | null
@@ -525,6 +723,12 @@ export type NotificationPreferenceCreateWithoutUserInput = {
   discordEnabled?: boolean
   slackWebhookUrl?: string | null
   slackEnabled?: boolean
+  pushChannelAddress?: string | null
+  pushEnabled?: boolean
+  receiptPreference?: string
+  assetFilters?: Prisma.NotificationPreferenceCreateassetFiltersInput | string[]
+  minAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  enabledChannels?: Prisma.NotificationPreferenceCreateenabledChannelsInput | string[]
   language?: string
   filterRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
@@ -540,6 +744,12 @@ export type NotificationPreferenceUncheckedCreateWithoutUserInput = {
   discordEnabled?: boolean
   slackWebhookUrl?: string | null
   slackEnabled?: boolean
+  pushChannelAddress?: string | null
+  pushEnabled?: boolean
+  receiptPreference?: string
+  assetFilters?: Prisma.NotificationPreferenceCreateassetFiltersInput | string[]
+  minAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  enabledChannels?: Prisma.NotificationPreferenceCreateenabledChannelsInput | string[]
   language?: string
   filterRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
@@ -571,6 +781,12 @@ export type NotificationPreferenceUpdateWithoutUserInput = {
   discordEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   slackWebhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pushChannelAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pushEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  receiptPreference?: Prisma.StringFieldUpdateOperationsInput | string
+  assetFilters?: Prisma.NotificationPreferenceUpdateassetFiltersInput | string[]
+  minAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  enabledChannels?: Prisma.NotificationPreferenceUpdateenabledChannelsInput | string[]
   language?: Prisma.StringFieldUpdateOperationsInput | string
   filterRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
@@ -586,6 +802,12 @@ export type NotificationPreferenceUncheckedUpdateWithoutUserInput = {
   discordEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   slackWebhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pushChannelAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pushEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  receiptPreference?: Prisma.StringFieldUpdateOperationsInput | string
+  assetFilters?: Prisma.NotificationPreferenceUpdateassetFiltersInput | string[]
+  minAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  enabledChannels?: Prisma.NotificationPreferenceUpdateenabledChannelsInput | string[]
   language?: Prisma.StringFieldUpdateOperationsInput | string
   filterRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
@@ -604,6 +826,12 @@ export type NotificationPreferenceSelect<ExtArgs extends runtime.Types.Extension
   discordEnabled?: boolean
   slackWebhookUrl?: boolean
   slackEnabled?: boolean
+  pushChannelAddress?: boolean
+  pushEnabled?: boolean
+  receiptPreference?: boolean
+  assetFilters?: boolean
+  minAmount?: boolean
+  enabledChannels?: boolean
   language?: boolean
   filterRules?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -621,6 +849,12 @@ export type NotificationPreferenceSelectCreateManyAndReturn<ExtArgs extends runt
   discordEnabled?: boolean
   slackWebhookUrl?: boolean
   slackEnabled?: boolean
+  pushChannelAddress?: boolean
+  pushEnabled?: boolean
+  receiptPreference?: boolean
+  assetFilters?: boolean
+  minAmount?: boolean
+  enabledChannels?: boolean
   language?: boolean
   filterRules?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -638,6 +872,12 @@ export type NotificationPreferenceSelectUpdateManyAndReturn<ExtArgs extends runt
   discordEnabled?: boolean
   slackWebhookUrl?: boolean
   slackEnabled?: boolean
+  pushChannelAddress?: boolean
+  pushEnabled?: boolean
+  receiptPreference?: boolean
+  assetFilters?: boolean
+  minAmount?: boolean
+  enabledChannels?: boolean
   language?: boolean
   filterRules?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -655,11 +895,17 @@ export type NotificationPreferenceSelectScalar = {
   discordEnabled?: boolean
   slackWebhookUrl?: boolean
   slackEnabled?: boolean
+  pushChannelAddress?: boolean
+  pushEnabled?: boolean
+  receiptPreference?: boolean
+  assetFilters?: boolean
+  minAmount?: boolean
+  enabledChannels?: boolean
   language?: boolean
   filterRules?: boolean
 }
 
-export type NotificationPreferenceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "telegramChatId" | "telegramEnabled" | "emailEnabled" | "whatsappNumber" | "whatsappEnabled" | "discordWebhookUrl" | "discordEnabled" | "slackWebhookUrl" | "slackEnabled" | "language" | "filterRules", ExtArgs["result"]["notificationPreference"]>
+export type NotificationPreferenceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "telegramChatId" | "telegramEnabled" | "emailEnabled" | "whatsappNumber" | "whatsappEnabled" | "discordWebhookUrl" | "discordEnabled" | "slackWebhookUrl" | "slackEnabled" | "pushChannelAddress" | "pushEnabled" | "receiptPreference" | "assetFilters" | "minAmount" | "enabledChannels" | "language" | "filterRules", ExtArgs["result"]["notificationPreference"]>
 export type NotificationPreferenceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -687,6 +933,12 @@ export type $NotificationPreferencePayload<ExtArgs extends runtime.Types.Extensi
     discordEnabled: boolean
     slackWebhookUrl: string | null
     slackEnabled: boolean
+    pushChannelAddress: string | null
+    pushEnabled: boolean
+    receiptPreference: string
+    assetFilters: string[]
+    minAmount: runtime.Decimal | null
+    enabledChannels: string[]
     language: string
     filterRules: runtime.JsonValue | null
   }, ExtArgs["result"]["notificationPreference"]>
@@ -1124,6 +1376,12 @@ export interface NotificationPreferenceFieldRefs {
   readonly discordEnabled: Prisma.FieldRef<"NotificationPreference", 'Boolean'>
   readonly slackWebhookUrl: Prisma.FieldRef<"NotificationPreference", 'String'>
   readonly slackEnabled: Prisma.FieldRef<"NotificationPreference", 'Boolean'>
+  readonly pushChannelAddress: Prisma.FieldRef<"NotificationPreference", 'String'>
+  readonly pushEnabled: Prisma.FieldRef<"NotificationPreference", 'Boolean'>
+  readonly receiptPreference: Prisma.FieldRef<"NotificationPreference", 'String'>
+  readonly assetFilters: Prisma.FieldRef<"NotificationPreference", 'String[]'>
+  readonly minAmount: Prisma.FieldRef<"NotificationPreference", 'Decimal'>
+  readonly enabledChannels: Prisma.FieldRef<"NotificationPreference", 'String[]'>
   readonly language: Prisma.FieldRef<"NotificationPreference", 'String'>
   readonly filterRules: Prisma.FieldRef<"NotificationPreference", 'Json'>
 }

@@ -3,7 +3,7 @@ import CircuitBreaker from 'opossum';
 import { env } from '../config/env';
 import { fetchWithTimeout, withDeadline } from './external-request';
 import { workerFairnessManager } from './rate-budget';
-import { registerRedisCleanupTask } from './redis';
+import { registerRedisCleanupTask, redisCache } from './redis';
 import { cryptoVault } from '../utils/crypto-vault';
 import { applyWebhookPayloadTemplate } from '../utils/payload-template';
 import { adaptiveWebhookRateLimiter, waitForAdaptiveBackoff } from '../utils/rate-limiter';
@@ -19,6 +19,7 @@ import { dispatchWhatsAppAlert } from '../utils/whatsapp';
 import { emailService } from '../services/email.service';
 import { dispatchDiscordAlert } from '../utils/discord';
 import { dispatchSlackAlert, isValidSlackWebhookUrl } from '../utils/slack';
+import { dispatchPushNotification, PushNotificationData } from '../utils/push-protocol';
 
 function decryptWebhookSecret(webhook: {
   keyVersion: number;
@@ -62,6 +63,37 @@ export let alertQueueEvents: QueueEvents | null = null;
 export let alertWorker: Worker<AlertJobData> | null = null;
 
 const circuitBreakers = new Map<string, CircuitBreaker<any>>();
+
+interface CircuitBreakerState {
+  state: "closed" | "open" | "half-open";
+  failureCount: number;
+  openedAt?: number;
+  lastFailureAt?: number;
+}
+
+const CIRCUIT_BREAKER_REDIS_PREFIX = "circuit_breaker:";
+
+async function syncCircuitBreakerStateToRedis(webhookId: string, state: CircuitBreakerState): Promise<void> {
+  try {
+    const key = `${CIRCUIT_BREAKER_REDIS_PREFIX}${webhookId}`;
+    const value = JSON.stringify(state);
+    await redisCache.set(key, value, 3600); // 1 hour TTL
+  } catch (error: any) {
+    console.error(`[CircuitBreaker] Failed to sync state to Redis for webhook ${webhookId}: ${error.message}`);
+  }
+}
+
+async function loadCircuitBreakerStateFromRedis(webhookId: string): Promise<CircuitBreakerState | null> {
+  try {
+    const key = `${CIRCUIT_BREAKER_REDIS_PREFIX}${webhookId}`;
+    const value = await redisCache.get(key);
+    if (!value) return null;
+    return JSON.parse(value) as CircuitBreakerState;
+  } catch (error: any) {
+    console.error(`[CircuitBreaker] Failed to load state from Redis for webhook ${webhookId}: ${error.message}`);
+    return null;
+  }
+}
 
 export function buildTelegramPaymentCard(data: AlertJobData): string {
   const escapeHtml = (value: string) => value.replace(/[&<>\"']/g, (char) => ({
@@ -137,7 +169,7 @@ async function getOrCreateCircuitBreaker(
     return circuitBreakers.get(webhookId)!;
   }
 
-  const breaker = new CircuitBreaker(
+  const breaker: CircuitBreaker<any> = new CircuitBreaker(
     async (url: string, payload: string, headers: Record<string, string>) => {
       const response = await fetchWithTimeout(
         url,
@@ -176,6 +208,42 @@ async function getOrCreateCircuitBreaker(
     },
   );
 
+  // Initialize with Redis sync
+  const redisState = await loadCircuitBreakerStateFromRedis(webhookId);
+  if (redisState) {
+    if (redisState.state === "open") {
+      breaker.open();
+    } else if (redisState.state === "half-open") {
+      breaker.halfOpen();
+    } else {
+      breaker.close();
+    }
+    console.log(`[CircuitBreaker] Initialized webhook ${webhookId} with Redis state: ${redisState.state}`);
+  }
+
+  // Add event listeners to sync state changes to Redis
+  breaker.on('open', () => {
+    syncCircuitBreakerStateToRedis(webhookId, {
+      state: 'open',
+      failureCount: CIRCUIT_BREAKER_THRESHOLD,
+      openedAt: Date.now(),
+    });
+  });
+
+  breaker.on('halfOpen', () => {
+    syncCircuitBreakerStateToRedis(webhookId, {
+      state: 'half-open',
+      failureCount: 0,
+    });
+  });
+
+  breaker.on('close', () => {
+    syncCircuitBreakerStateToRedis(webhookId, {
+      state: 'closed',
+      failureCount: 0,
+    });
+  });
+
   circuitBreakers.set(webhookId, breaker);
   return breaker;
 }
@@ -199,6 +267,14 @@ async function updateCircuitBreakerState(
       lastFailureAt: state === "open" ? new Date() : undefined,
       openedAt: state === "open" ? new Date() : undefined,
     },
+  });
+
+  // Sync to Redis for distributed state sharing
+  await syncCircuitBreakerStateToRedis(webhookId, {
+    state,
+    failureCount,
+    openedAt: state === "open" ? Date.now() : undefined,
+    lastFailureAt: state === "open" ? Date.now() : undefined,
   });
 }
 
@@ -755,6 +831,47 @@ export async function processAlertDispatch(data: AlertJobData) {
       ).catch(async (err: any) => {
         console.warn(`[Worker] Email dispatch error: ${err.message}`);
         await recordDeadLetter('email', recipientEmail, err);
+        if (err.isRetriable) {
+          throw err;
+        }
+        return null;
+      });
+    }
+
+    // Dispatch Push Protocol alert if user configured push preferences (#253)
+    const pushEnabled = wallet?.user?.notifyPrefs?.pushEnabled;
+    const pushDestination = wallet?.user?.notifyPrefs?.pushChannelAddress || wallet?.publicKey;
+    if (pushEnabled && pushDestination) {
+      await deliverWithIdempotency(
+        {
+          paymentId: data.paymentId,
+          channel: "push",
+          destination: pushDestination,
+          userId,
+        },
+        async () => {
+          await workerFairnessManager.acquireProviderBudget('push');
+          const pushData: PushNotificationData = {
+            paymentId: data.paymentId,
+            txHash: data.txHash,
+            amount: data.amount,
+            asset: data.asset,
+            assetIssuer: data.assetIssuer,
+            fromAddress: data.fromAddress,
+            recipientAddress: pushDestination,
+            receivedAt: data.receivedAt,
+          };
+          const ok = await dispatchPushNotification(pushDestination, pushData);
+          if (!ok) {
+            const err: any = new Error(`Push Protocol dispatch failed for recipient ${pushDestination}`);
+            err.isRetriable = true;
+            throw err;
+          }
+          return { success: true };
+        }
+      ).catch(async (err: any) => {
+        console.warn(`[Worker] Push Protocol dispatch error: ${err.message}`);
+        await recordDeadLetter('push', pushDestination, err);
         if (err.isRetriable) {
           throw err;
         }
