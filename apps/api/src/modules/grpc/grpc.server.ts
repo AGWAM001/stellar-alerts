@@ -1,7 +1,6 @@
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
-import { Redis } from 'ioredis';
-import { getRedisClient } from '../../lib/redis';
+import { redis } from '../../lib/redis';
 import path from 'path';
 
 const PROTO_PATH = path.join(__dirname, 'stellar.proto');
@@ -18,21 +17,20 @@ const stellarProto = grpc.loadPackageDefinition(packageDefinition).stellar as an
 
 export const createGrpcServer = (port: number = 50051) => {
   const server = new grpc.Server();
-  const redis = getRedisClient();
 
   const ledgerServiceImpl = {
     StreamLedgerEvents: (call: any) => {
       const pubsub = redis.duplicate();
       const channel = 'ledger_events';
 
-      pubsub.subscribe(channel, (err) => {
+      pubsub.subscribe(channel, (err?: Error | null) => {
         if (err) {
           call.emit('error', err);
           return;
         }
       });
 
-      pubsub.on('message', (channel, message) => {
+      pubsub.on('message', (ch: string, message: string) => {
         const event = JSON.parse(message);
         call.write({
           ledger_seq: event.ledgerSeq,
@@ -51,16 +49,16 @@ export const createGrpcServer = (port: number = 50051) => {
       const pubsub = redis.duplicate();
       const channel = 'wallet_alerts';
 
-      pubsub.subscribe(channel, (err) => {
+      pubsub.subscribe(channel, (err?: Error | null) => {
         if (err) {
           call.emit('error', err);
           return;
         }
       });
 
-      pubsub.on('message', (channel, message) => {
+      pubsub.on('message', (ch: string, message: string) => {
         const alert = JSON.parse(message);
-        
+
         if (wallet_id && alert.walletId !== wallet_id) return;
         if (asset_filter && alert.asset !== asset_filter) return;
         if (min_amount && parseFloat(alert.amount) < min_amount) return;
@@ -89,10 +87,10 @@ export const createGrpcServer = (port: number = 50051) => {
         if (alert_request) {
           const pubsub = redis.duplicate();
           pubsub.subscribe('wallet_alerts');
-          
+
           subscriptions.set(subscription_id, { pubsub, type: 'alert' });
 
-          pubsub.on('message', (channel, message) => {
+          pubsub.on('message', (ch: string, message: string) => {
             const alert = JSON.parse(message);
             call.write({
               subscription_id,
@@ -112,10 +110,10 @@ export const createGrpcServer = (port: number = 50051) => {
         if (ledger_request) {
           const pubsub = redis.duplicate();
           pubsub.subscribe('ledger_events');
-          
+
           subscriptions.set(subscription_id, { pubsub, type: 'ledger' });
 
-          pubsub.on('message', (channel, message) => {
+          pubsub.on('message', (ch: string, message: string) => {
             const event = JSON.parse(message);
             call.write({
               subscription_id,
@@ -144,18 +142,18 @@ export const createGrpcServer = (port: number = 50051) => {
       server.bindAsync(
         `0.0.0.0:${port}`,
         grpc.ServerCredentials.createInsecure(),
-        (err, port) => {
+        (err: Error | null, boundPort: number) => {
           if (err) {
             console.error('Failed to start gRPC server:', err);
             return;
           }
-          console.log(`gRPC server running on port ${port}`);
+          console.log(`gRPC server running on port ${boundPort}`);
           server.start();
         }
       );
     },
     stop: () => {
-      server.tryShutdown((err) => {
+      server.tryShutdown((err?: Error) => {
         if (err) {
           console.error('Error shutting down gRPC server:', err);
         } else {

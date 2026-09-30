@@ -47,7 +47,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Generate Prisma Client
         run: npx prisma generate
@@ -127,7 +127,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Unit test the verification scripts themselves
         run: npm run test:scripts
@@ -155,13 +155,16 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Generate Prisma Client
         run: npx prisma generate
         working-directory: apps/api
         env:
           DATABASE_URL: "postgresql://user:password@localhost:5432/stellar_alerts?schema=public"
+
+      - name: Check Prisma migration and generated-client drift
+        run: npx tsx scripts/check-prisma-drift.ts
 
       - name: Build Shared Package (@stellar-alerts/shared)
         run: npx tsc -p packages/shared/tsconfig.json
