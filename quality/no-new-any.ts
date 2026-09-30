@@ -54,7 +54,11 @@ async function collectFiles(directory: string): Promise<string[]> {
   const files = await Promise.all(
     entries.map((entry) => {
       const entryPath = path.join(directory, entry.name);
-      return entry.isDirectory() ? collectFiles(entryPath) : Promise.resolve([entryPath]);
+      return entry.isDirectory()
+        ? entry.name === 'node_modules'
+          ? Promise.resolve([])
+          : collectFiles(entryPath)
+        : Promise.resolve([entryPath]);
     }),
   );
   return files.flat();
