@@ -17,7 +17,7 @@ import { describe, it, expect } from 'vitest';
 import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import { resolve, join } from 'path';
 
-const API_ROOT = resolve(__dirname, '../../../../');
+const API_ROOT = resolve(__dirname, '../../..');
 const SCHEMA_PATH = join(API_ROOT, 'prisma/schema.prisma');
 const MIGRATIONS_DIR = join(API_ROOT, 'prisma/migrations');
 const LOCK_FILE = join(MIGRATIONS_DIR, 'migration_lock.toml');

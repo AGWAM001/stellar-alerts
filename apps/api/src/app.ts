@@ -57,7 +57,7 @@ export const buildApp = async () => {
    * that clients and API gateways can cross-reference server-side log entries.
    */
   app.addHook('onRequest', async (request, reply) => {
-    void reply.header('x-request-id', request.id);
+    void reply.header('x-request-id', request.requestId || request.id);
   });
 
   // ── Security & observability hooks (registered before routes) ────────────
@@ -86,7 +86,7 @@ export const buildApp = async () => {
           code: error.code,
           message: error.message,
           ...(error.details !== undefined ? { details: error.details } : {}),
-          requestId: request.id,
+          requestId: request.requestId || request.id,
         },
       });
     }
@@ -100,7 +100,7 @@ export const buildApp = async () => {
           code: 'VALIDATION_ERROR',
           message: 'Request validation failed',
           details: (error as any).validation,
-          requestId: request.id,
+          requestId: request.requestId || request.id,
         },
       });
     }
@@ -110,7 +110,7 @@ export const buildApp = async () => {
       error: {
         code: 'INTERNAL_ERROR',
         message: 'An unexpected error occurred',
-        requestId: request.id,
+        requestId: request.requestId || request.id,
       },
     });
   });

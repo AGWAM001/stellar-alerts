@@ -31,8 +31,13 @@ export async function registerCorrelation(app: FastifyInstance): Promise<void> {
     const candidate = Array.isArray(incoming) ? incoming[0] : incoming;
 
     const id =
-      candidate && SAFE_ID_RE.test(candidate) ? candidate : randomUUID();
+      candidate && SAFE_ID_RE.test(candidate)
+        ? candidate
+        : request.id && SAFE_ID_RE.test(request.id) && request.id.includes('-')
+          ? request.id
+          : randomUUID();
 
+    request.id = id;
     request.requestId = id;
 
     // Bind the id to the child logger so it appears in every log line for
@@ -44,7 +49,7 @@ export async function registerCorrelation(app: FastifyInstance): Promise<void> {
   app.addHook('onSend', async (request, reply, payload) => {
     // Echo the resolved request ID back so clients can correlate with their
     // own logs.
-    reply.header(REQUEST_ID_HEADER, request.requestId);
+    reply.header(REQUEST_ID_HEADER, request.requestId || request.id);
     return payload;
   });
 }

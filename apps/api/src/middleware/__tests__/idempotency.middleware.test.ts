@@ -6,7 +6,11 @@ import { registerIdempotency, IDEMPOTENCY_HEADER } from '../idempotency.middlewa
 // Use an in-memory Map to simulate the Redis SET/GET behaviour without
 // requiring a live Redis instance.
 
-const redisStore = new Map<string, { value: string; expiresAt: number }>();
+const { redisStore } = vi.hoisted(() => {
+  return {
+    redisStore: new Map<string, { value: string; expiresAt: number }>(),
+  };
+});
 
 vi.mock('../../lib/redis', () => {
   const store = redisStore;
