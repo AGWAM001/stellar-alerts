@@ -1,5 +1,22 @@
 import crypto from 'crypto';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Pin the bot token deterministically so the signed initData fixtures below do
+// not depend on whatever TELEGRAM_BOT_TOKEN the CI environment injects.
+const { BOT_TOKEN } = vi.hoisted(() => ({ BOT_TOKEN: 'test-bot-token:AAABBB' }));
+
+vi.mock('../../../config/env', () => ({
+  env: { TELEGRAM_BOT_TOKEN: BOT_TOKEN },
+}));
+
+vi.mock('../../../lib/prisma', () => ({
+  prisma: {
+    user: { upsert: vi.fn() },
+    notificationPreference: { findUnique: vi.fn(), upsert: vi.fn() },
+    notificationDelivery: { findMany: vi.fn() },
+  },
+}));
+
 import {
   TelegramMiniAppService,
   applyAssetThreshold,
@@ -11,17 +28,6 @@ import {
 } from '../telegram-miniapp.service';
 import { TelegramInitDataError } from '../../../utils/telegram';
 import { prisma } from '../../../lib/prisma';
-
-vi.mock('../../../lib/prisma', () => ({
-  prisma: {
-    user: { upsert: vi.fn() },
-    notificationPreference: { findUnique: vi.fn(), upsert: vi.fn() },
-    notificationDelivery: { findMany: vi.fn() },
-  },
-}));
-
-// env.TELEGRAM_BOT_TOKEN resolves to the test dummy from config/env.ts.
-const BOT_TOKEN = 'dummy-telegram-bot-token';
 
 /** Builds a correctly-signed initData string for the given fields. */
 function signInitData(fields: Record<string, string>, botToken = BOT_TOKEN): string {
