@@ -19,6 +19,19 @@ const SYNC_TAGS = {
   WATCHERS: 'sync-watchers',
 } as const;
 
+interface BackgroundSyncManager {
+  register(tag: string): Promise<void>;
+  getTags(): Promise<string[]>;
+}
+
+type SyncCapableServiceWorkerRegistration = ServiceWorkerRegistration & {
+  sync?: BackgroundSyncManager;
+};
+
+function getSyncManager(registration: ServiceWorkerRegistration) {
+  return (registration as SyncCapableServiceWorkerRegistration).sync;
+}
+
 /**
  * Register background sync for alerts
  */
@@ -30,12 +43,13 @@ export async function registerAlertSync(): Promise<void> {
 
   try {
     const registration = await navigator.serviceWorker.ready;
-    if (!registration.sync) {
+    const syncManager = getSyncManager(registration);
+    if (!syncManager) {
       console.warn('[BackgroundSync] Sync manager not available');
       return;
     }
 
-    await registration.sync.register(SYNC_TAGS.ALERTS);
+    await syncManager.register(SYNC_TAGS.ALERTS);
     console.log('[BackgroundSync] Registered alert sync task');
   } catch (error) {
     console.error('[BackgroundSync] Failed to register alert sync:', error);
@@ -53,12 +67,13 @@ export async function registerWatcherSync(): Promise<void> {
 
   try {
     const registration = await navigator.serviceWorker.ready;
-    if (!registration.sync) {
+    const syncManager = getSyncManager(registration);
+    if (!syncManager) {
       console.warn('[BackgroundSync] Sync manager not available');
       return;
     }
 
-    await registration.sync.register(SYNC_TAGS.WATCHERS);
+    await syncManager.register(SYNC_TAGS.WATCHERS);
     console.log('[BackgroundSync] Registered watcher sync task');
   } catch (error) {
     console.error('[BackgroundSync] Failed to register watcher sync:', error);
@@ -213,11 +228,12 @@ export async function getRegisteredSyncTags(): Promise<string[]> {
 
   try {
     const registration = await navigator.serviceWorker.ready;
-    if (!registration.sync) {
+    const syncManager = getSyncManager(registration);
+    if (!syncManager) {
       return [];
     }
 
-    return await registration.sync.getTags();
+    return await syncManager.getTags();
   } catch (error) {
     console.error('[BackgroundSync] Failed to get sync tags:', error);
     return [];
@@ -234,7 +250,7 @@ export async function unregisterSync(tag: string): Promise<void> {
 
   try {
     const registration = await navigator.serviceWorker.ready;
-    if (!registration.sync) {
+    if (!getSyncManager(registration)) {
       return;
     }
 

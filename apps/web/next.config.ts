@@ -29,12 +29,14 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // PWA configuration for offline support
   compress: true,
 
-  // Headers for PWA and offline support
   async headers() {
     return [
+      {
+        source: '/:path*',
+        headers: securityHeaders,
+      },
       {
         source: "/manifest.json",
         headers: [
@@ -78,7 +80,6 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Rewrites for offline fallback
   async rewrites() {
     return {
       afterFiles: [
@@ -90,9 +91,7 @@ const nextConfig: NextConfig = {
     };
   },
 
-  // Other existing config
   reactStrictMode: true,
-  swcMinify: true,
 };
 
 export default nextConfig;

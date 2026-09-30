@@ -96,6 +96,27 @@ export function useServiceWorker(): ServiceWorkerStatus {
 
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
 
+  const skipWaiting = useCallback(() => {
+    if (!registrationRef.current?.waiting) return;
+
+    registrationRef.current.waiting.postMessage({ type: 'SKIP_WAITING' });
+    setHasUpdate(false);
+
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+  }, []);
+
+  const triggerSync = useCallback(async () => {
+    try {
+      console.log('[SW] Triggering manual sync...');
+      await Promise.all([syncAlertsManual(), syncWatchersManual()]);
+      console.log('[SW] Manual sync completed');
+    } catch (error) {
+      console.error('[SW] Manual sync failed:', error);
+    }
+  }, []);
+
   /**
    * Handle online/offline state
    */
@@ -120,7 +141,7 @@ export function useServiceWorker(): ServiceWorkerStatus {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [triggerSync]);
 
   /**
    * Register service worker on mount
@@ -187,35 +208,7 @@ export function useServiceWorker(): ServiceWorkerStatus {
         setRegistrationError(err);
       }
     })();
-  }, [isSupported]);
-
-  /**
-   * Skip waiting and update service worker
-   */
-  const skipWaiting = useCallback(() => {
-    if (!registrationRef.current?.waiting) return;
-
-    registrationRef.current.waiting.postMessage({ type: 'SKIP_WAITING' });
-    setHasUpdate(false);
-
-    // Reload after short delay to allow SW to take control
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
-  }, []);
-
-  /**
-   * Trigger manual sync
-   */
-  const triggerSync = useCallback(async () => {
-    try {
-      console.log('[SW] Triggering manual sync...');
-      await Promise.all([syncAlertsManual(), syncWatchersManual()]);
-      console.log('[SW] Manual sync completed');
-    } catch (error) {
-      console.error('[SW] Manual sync failed:', error);
-    }
-  }, []);
+  }, [isSupported, skipWaiting]);
 
   return {
     isSupported,
@@ -241,12 +234,16 @@ function showUpdateNotification(onSkip: () => void): void {
   // Example with browser notification:
   if ('Notification' in window && Notification.permission === 'granted') {
     try {
-      new Notification('Stellar Alerts Update', {
+      const notification = new Notification('Stellar Alerts Update', {
         body: 'A new version is available. Click to update.',
         icon: '/icon-192x192.png',
         badge: '/icon-192x192.png',
         tag: 'app-update',
       });
+      notification.onclick = () => {
+        onSkip();
+        notification.close();
+      };
     } catch (error) {
       console.error('[SW] Failed to show notification:', error);
     }
