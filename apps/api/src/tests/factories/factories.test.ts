@@ -164,6 +164,7 @@ describe('makePayment', () => {
     expect(a.txHash).not.toBe(b.txHash);
   });
 
+<<<<<<< HEAD
   it('amount is a string with correct decimal precision', () => {
     const p = makePayment();
     expect(typeof p.amount).toBe('string');

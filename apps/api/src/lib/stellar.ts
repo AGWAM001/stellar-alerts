@@ -1,8 +1,22 @@
 import * as StellarSdk from 'stellar-sdk';
+import { env } from '../config/env';
+import { withDeadline } from './external-request';
+
+// Configure global Horizon AxiosClient default timeout
+if ((StellarSdk.Horizon as any)?.AxiosClient?.defaults) {
+  (StellarSdk.Horizon as any).AxiosClient.defaults.timeout = env.HORIZON_REQUEST_TIMEOUT_MS;
+}
 
 const server = new StellarSdk.Horizon.Server('https://horizon-testnet.stellar.org');
 
 export const STROOPS_PER_UNIT = 10_000_000;
+
+function logPaymentsError(publicKey: string, error: any) {
+  console.error(
+    `[Stellar] Error fetching payments for ${publicKey.substring(0, 8)}...:`,
+    error?.message ?? error
+  );
+}
 
 export interface DecodedStellarAsset {
   assetCode: string;
@@ -172,9 +186,6 @@ export function parseSacTransferEvent(event: any, decimals: number = 7): SacTran
     rawAmount: rawAmount.toString(),
   };
 }
-function logPaymentsError(publicKey: string, error: any) {
-  console.error(`[Stellar] Error fetching payments for account ${publicKey}:`, error?.message || error);
-}
 
 export interface MultisigSigner {
   key: string;
@@ -289,22 +300,162 @@ export function countMultisigSignatures(
   };
 }
 
+export const DEFAULT_HORIZON_ENDPOINTS = [
+  process.env.HORIZON_URL || 'https://horizon-testnet.stellar.org',
+  process.env.HORIZON_URL_NODE2 || 'https://horizon-testnet.publicnode.org',
+  process.env.HORIZON_URL_NODE3 || 'https://horizon-testnet.lobstr.co',
+];
+
+export class MultiNodeHorizonClient {
+  public endpoints: string[];
+  public servers: StellarSdk.Horizon.Server[];
+
+  constructor(endpoints: string[] = DEFAULT_HORIZON_ENDPOINTS) {
+    this.endpoints = endpoints;
+    this.servers = endpoints.map((url) => new StellarSdk.Horizon.Server(url));
+  }
+
+  async getPaymentsSince(publicKey: string, cursor: string, limit = 50): Promise<any[]> {
+    const result = await this.getPaymentsSinceResult(publicKey, cursor, limit);
+    return result.records;
+  }
+
+  /**
+   * Same lookup as {@link getPaymentsSince}, but distinguishes "no new
+   * payments" (every node reached, none had anything new) from "provider
+   * outage" (every node in the failover list errored) — the caller needs
+   * that distinction to avoid silently treating an outage as "fully caught
+   * up" and to surface it for operator visibility (see lib/cursor-recovery.ts).
+   */
+  async getPaymentsSinceResult(
+    publicKey: string,
+    cursor: string,
+    limit = 50,
+    options: { timeoutMs?: number; signal?: AbortSignal } = {},
+  ): Promise<{ records: any[]; allNodesFailed: boolean; lastError: string | null }> {
+    if (!publicKey || !StellarSdk.StrKey.isValidEd25519PublicKey(publicKey)) {
+      console.warn(`[MultiNodeHorizon] Skipping invalid public key checksum: "${publicKey}"`);
+      return { records: [], allNodesFailed: false, lastError: null };
+    }
+
+    const timeoutMs = options.timeoutMs ?? env.HORIZON_REQUEST_TIMEOUT_MS;
+    let lastError: string | null = null;
+
+    for (let i = 0; i < this.servers.length; i++) {
+      const server = this.servers[i];
+      try {
+        const payments = await withDeadline(
+          () =>
+            server
+              .payments()
+              .forAccount(publicKey)
+              .cursor(cursor)
+              .order('asc')
+              .limit(limit)
+              .call(),
+          timeoutMs,
+          options.signal,
+          `Horizon node ${this.endpoints[i]}`,
+        );
+        return { records: payments.records, allNodesFailed: false, lastError: null };
+      } catch (error: any) {
+        lastError = error?.message || String(error);
+        console.warn(
+          `[MultiNodeHorizon] Horizon node ${this.endpoints[i]} failed: ${lastError}. Trying fallback node...`,
+        );
+      }
+    }
+    return { records: [], allNodesFailed: true, lastError };
+  }
+
+  streamPaymentsMultiNode(
+    publicKey: string,
+    cursor: string,
+    onMessage: (record: any, nodeUrl: string) => Promise<void> | void,
+    onError?: (error: any, nodeUrl: string) => void
+  ): () => void {
+    const seenPagingTokens = new Set<string>();
+    const activeCloseFns: Array<() => void> = [];
+
+    this.servers.forEach((s, index) => {
+      let isClosed = false;
+      const nodeUrl = this.endpoints[index] || s.serverURL.toString();
+
+      const connect = () => {
+        if (isClosed) return;
+        try {
+          const closeStream = s
+            .payments()
+            .forAccount(publicKey)
+            .cursor(cursor)
+            .stream({
+              onmessage: async (record: any) => {
+                const token = record.paging_token || record.id || record.transaction_hash;
+                if (token && seenPagingTokens.has(token)) {
+                  return; // Deduplicate across concurrent multi-node SSE streams
+                }
+                if (token) {
+                  seenPagingTokens.add(token);
+                  if (seenPagingTokens.size > 10000) {
+                    const first = seenPagingTokens.values().next().value;
+                    if (first) seenPagingTokens.delete(first);
+                  }
+                }
+                await onMessage(record, nodeUrl);
+              },
+              onerror: (error: any) => {
+                if (onError) onError(error, nodeUrl);
+                // Reconnect failover worker connection for this specific node
+                setTimeout(() => {
+                  if (!isClosed) connect();
+                }, 5000);
+              },
+            }) as unknown as () => void;
+
+          activeCloseFns.push(() => {
+            isClosed = true;
+            if (closeStream) closeStream();
+          });
+        } catch (err: any) {
+          if (onError) onError(err, nodeUrl);
+        }
+      };
+
+      connect();
+    });
+
+    return () => {
+      activeCloseFns.forEach((fn) => fn());
+    };
+  }
+}
+
+export const multiNodeClient = new MultiNodeHorizonClient();
+
 export const stellar = {
   server,
+  multiNode: multiNodeClient,
 
   // Fetches an account's current signer list and multisig thresholds from
   // Horizon. Returns null for an invalid public key or if the account
   // cannot be loaded (e.g. not yet funded on this network).
   async getAccountSigners(
-    publicKey: string
+    publicKey: string,
+    options: { timeoutMs?: number; signal?: AbortSignal } = {},
   ): Promise<{ signers: MultisigSigner[]; thresholds: MultisigThresholds } | null> {
     if (!publicKey || !StellarSdk.StrKey.isValidEd25519PublicKey(publicKey)) {
       console.warn(`[Stellar] Skipping invalid public key format or checksum: "${publicKey}"`);
       return null;
     }
 
+    const timeoutMs = options.timeoutMs ?? env.HORIZON_REQUEST_TIMEOUT_MS;
     try {
-      const account = await server.loadAccount(publicKey);
+      const account = await withDeadline(
+        () => server.loadAccount(publicKey),
+        timeoutMs,
+        options.signal,
+        'Horizon',
+      );
       return {
         signers: account.signers.map((s) => ({ key: s.key, weight: s.weight })),
         thresholds: {
@@ -319,18 +470,30 @@ export const stellar = {
     }
   },
   // Helper to fetch recent payments for a given account
-  async getRecentPayments(publicKey: string, limit: number = 10) {
+  async getRecentPayments(
+    publicKey: string,
+    limit: number = 10,
+    options: { timeoutMs?: number; signal?: AbortSignal } = {},
+  ) {
     if (!publicKey || !StellarSdk.StrKey.isValidEd25519PublicKey(publicKey)) {
       console.warn(`[Stellar] Skipping invalid public key format or checksum: "${publicKey}"`);
       return [];
     }
 
+    const timeoutMs = options.timeoutMs ?? env.HORIZON_REQUEST_TIMEOUT_MS;
     try {
-      const payments = await server.payments()
-        .forAccount(publicKey)
-        .order('desc')
-        .limit(limit)
-        .call();
+      const payments = await withDeadline(
+        () =>
+          server
+            .payments()
+            .forAccount(publicKey)
+            .order('desc')
+            .limit(limit)
+            .call(),
+        timeoutMs,
+        options.signal,
+        'Horizon',
+      );
       
       return payments.records;
     } catch (error: any) {
@@ -341,24 +504,13 @@ export const stellar = {
 
   // Fetch payments recorded after the given Horizon paging token, oldest first
   async getPaymentsSince(publicKey: string, cursor: string, limit: number = 50) {
-    if (!publicKey || !StellarSdk.StrKey.isValidEd25519PublicKey(publicKey)) {
-      console.warn(`[Stellar] Skipping invalid public key format or checksum: "${publicKey}"`);
-      return [];
-    }
+    return multiNodeClient.getPaymentsSince(publicKey, cursor, limit);
+  },
 
-    try {
-      const payments = await server.payments()
-        .forAccount(publicKey)
-        .cursor(cursor)
-        .order('asc')
-        .limit(limit)
-        .call();
-
-      return payments.records;
-    } catch (error: any) {
-      logPaymentsError(publicKey, error);
-      return [];
-    }
+  // Same as getPaymentsSince, but reports whether every failover node
+  // errored (a provider outage) instead of masking it as "no new payments".
+  async getPaymentsSinceResult(publicKey: string, cursor: string, limit: number = 50) {
+    return multiNodeClient.getPaymentsSinceResult(publicKey, cursor, limit);
   },
 
   // Paging token of the most recent payment, used to seed a fresh cursor
