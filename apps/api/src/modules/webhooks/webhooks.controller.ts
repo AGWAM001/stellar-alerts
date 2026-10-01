@@ -1,39 +1,30 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { createWebhookSchema, webhookParamsSchema } from './webhooks.schema';
 import { webhooksService } from './webhooks.service';
-import { decryptSecret } from '../../utils/crypto-vault';
+import { NotFoundError, zodValidationError } from '../../lib/errors';
 
 export class WebhooksController {
   async addWebhook(request: FastifyRequest, reply: FastifyReply) {
     const parsed = createWebhookSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.status(400).send({ error: 'Invalid payload', details: parsed.error.format() });
+      throw zodValidationError(parsed, 'Invalid payload');
     }
 
     const userId = (request as any).user.id;
     const webhook = await webhooksService.addWebhook(userId, parsed.data.url, parsed.data.payloadTemplate);
-    if (webhook && webhook.secret) {
-      webhook.secret = decryptSecret(webhook.secret);
-    }
     return reply.status(201).send({ success: true, webhook });
   }
 
   async getWebhooks(request: FastifyRequest, reply: FastifyReply) {
     const userId = (request as any).user.id;
     const webhooks = await webhooksService.getWebhooks(userId);
-    const decryptedWebhooks = webhooks.map((webhook: any) => {
-      if (webhook && webhook.secret) {
-        webhook.secret = decryptSecret(webhook.secret);
-      }
-      return webhook;
-    });
-    return reply.send({ success: true, webhooks: decryptedWebhooks });
+    return reply.send({ success: true, webhooks });
   }
 
   async deleteWebhook(request: FastifyRequest, reply: FastifyReply) {
     const parsed = webhookParamsSchema.safeParse(request.params);
     if (!parsed.success) {
-      return reply.status(400).send({ error: 'Invalid parameters', details: parsed.error.format() });
+      throw zodValidationError(parsed, 'Invalid parameters');
     }
 
     try {
@@ -42,7 +33,7 @@ export class WebhooksController {
       return reply.send({ success: true });
     } catch (error: any) {
       if (error.message === 'Webhook not found') {
-        return reply.status(404).send({ error: 'Not Found', message: error.message });
+        throw new NotFoundError(error.message);
       }
       throw error;
     }
@@ -51,7 +42,7 @@ export class WebhooksController {
   async testWebhook(request: FastifyRequest, reply: FastifyReply) {
     const parsed = webhookParamsSchema.safeParse(request.params);
     if (!parsed.success) {
-      return reply.status(400).send({ error: 'Invalid parameters', details: parsed.error.format() });
+      throw zodValidationError(parsed, 'Invalid parameters');
     }
 
     try {
@@ -60,7 +51,7 @@ export class WebhooksController {
       return reply.send({ success: result.success, result });
     } catch (error: any) {
       if (error.message === 'Webhook not found') {
-        return reply.status(404).send({ error: 'Not Found', message: error.message });
+        throw new NotFoundError(error.message);
       }
       throw error;
     }
