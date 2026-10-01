@@ -27,4 +27,6 @@ export interface PaymentDTO {
   asset: string;
   memo?: string | null;
   receivedAt: Date | string;
+  /** Resume token for `/payments/stream?cursor=`; falls back to `id` when absent. */
+  pagingToken?: string;
 }

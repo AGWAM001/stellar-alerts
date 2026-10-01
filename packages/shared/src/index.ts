@@ -5,6 +5,7 @@ import { isValidEd25519PublicKey } from './strkey';
 // hand-written DTOs below (`components["schemas"]["RequestLinkInput"]`, etc).
 export type { components as ApiComponents, paths as ApiPaths } from './generated/api-types';
 export * from './config/index';
+export * from './merkle';
 // Single source of truth for Stellar StrKey / transaction-hash validation
 // (Ed25519 public keys, contract IDs, muxed addresses, transaction hashes).
 export * from './strkey';
