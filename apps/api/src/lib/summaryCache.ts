@@ -57,7 +57,7 @@ export function buildSummaryCacheKey(params: {
 
 /** Pattern used to invalidate all summary keys for a user (any kind / wallet / fiat). */
 export function buildSummaryUserPattern(userId: string): string {
-  return `summary:\( {SUMMARY_CACHE_VERSION}:*:user: \){userId}*`;
+  return `summary:${SUMMARY_CACHE_VERSION}:*:user:${userId}*`;
 }
 
 function isRedisUsable(): boolean {
