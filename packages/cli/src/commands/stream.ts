@@ -87,15 +87,20 @@ export function registerStreamCommands(program: Command): void {
         }
 
         const abortController = new AbortController();
-        const shutdown = () => {
+        process.on('SIGINT', () => {
           if (abortController.signal.aborted) {
             // Second signal: the user wants out now.
             process.exit(130);
           }
           abortController.abort();
-        };
-        process.on('SIGINT', shutdown);
-        process.on('SIGTERM', shutdown);
+        });
+        process.on('SIGTERM', () => {
+          if (abortController.signal.aborted) {
+            // Second signal: the user wants out now.
+            process.exit(130);
+          }
+          abortController.abort();
+        });
 
         const store = options.resume === false
           ? undefined
@@ -135,9 +140,6 @@ export function registerStreamCommands(program: Command): void {
       } catch (error) {
         console.error(chalk.red(`\n❌ Error: ${(error as Error).message}`));
         process.exitCode = 1;
-      } finally {
-        process.off('SIGINT', shutdown);
-        process.off('SIGTERM', shutdown);
       }
     });
 
