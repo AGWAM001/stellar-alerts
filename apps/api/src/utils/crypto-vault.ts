@@ -34,6 +34,10 @@ export class CryptoVault {
     return crypto.createHash('sha256').update(safeKey).digest();
   }
 
+  addKey(version: string, key: string): void {
+    this.keys.set(version, this.deriveKey(key));
+  }
+
   encrypt(plaintext: string): string {
     const iv = crypto.randomBytes(12);
     const cipher = crypto.createCipheriv('aes-256-gcm', this.currentKey, iv);
@@ -144,8 +148,7 @@ export class MasterKeyRotationManager {
 
     try {
       // Add new key to CryptoVault
-      const newKeyBuffer = this.deriveKey(newKey);
-      cryptoVault.keys.set(newVersion, newKeyBuffer);
+      cryptoVault.addKey(newVersion, newKey);
 
       // Re-encrypt all sensitive data
       const webhookRotationResult = await this.rotateWebhookSecrets(newVersion, batchSize, dryRun);

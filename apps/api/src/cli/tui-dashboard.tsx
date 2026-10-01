@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { render, Text, Box, Newline } from 'ink';
 import Table from 'ink-table';
-import { getRedisClient } from '../lib/redis';
+import { redis } from '../lib/redis';
 
 interface Payment {
   id: string;
@@ -35,12 +35,11 @@ const TuiDashboard: React.FC = () => {
   const [lastUpdate, setLastUpdate] = useState<string>(new Date().toISOString());
 
   useEffect(() => {
-    const redis = getRedisClient();
     const pubsub = redis.duplicate();
 
     pubsub.subscribe('payments', 'system_metrics');
 
-    pubsub.on('message', (channel, message) => {
+    pubsub.on('message', (channel: string, message: string) => {
       if (channel === 'payments') {
         const payment = JSON.parse(message);
         setPayments((prev) => [payment, ...prev].slice(0, 10));

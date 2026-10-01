@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest';
 import {
   evaluateContractUpgradeEvent,
   processContractUpgradeEvent,
@@ -37,7 +38,7 @@ describe('Contract Upgrade and Migration Event Watcher (#420)', () => {
       timestamp: '2026-09-27T14:10:00.000Z',
     };
 
-    const notifyMock = jest.fn();
+    const notifyMock = vi.fn();
     const alert = await processContractUpgradeEvent(event, notifyMock);
 
     expect(alert).not.toBeNull();

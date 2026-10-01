@@ -513,6 +513,59 @@ export function parseSorobanMintBurnEvent(event: any): ParsedSorobanMintBurn | n
   };
 }
 
+export interface ParsedSorobanApproval {
+  contractId: string;
+  from: string;
+  spender: string;
+  amount: string;
+  rawAmount: bigint;
+  liveUntilLedger: number;
+  ledgerSeq?: number;
+}
+
+/**
+ * Parses a raw Soroban RPC event into a SEP-41 token `approve` event, if it
+ * looks like one. Topics: `["approve", from, spender]`. Data carries the new
+ * allowance `amount` and the ledger it's valid through — contracts vary
+ * between `live_until_ledger` (the field name in the SEP-41 reference
+ * implementation) and `expiration_ledger` (seen in some earlier/custom
+ * token contracts), so both are accepted.
+ */
+export function parseApprovalEvent(event: any): ParsedSorobanApproval | null {
+  if (!event?.topic?.length) return null;
+  const topic = extractSwapTopicValue(event.topic[0]);
+  if (topic !== 'approve') return null;
+
+  const value = event.value ?? event.data ?? {};
+  const contractId = event.contractId || '';
+
+  const rawAmount = decodeScAmount(value.amount ?? value.approve?.amount);
+  if (rawAmount === null) return null;
+
+  const from = asAddressString(value.from ?? value.approve?.from) || asAddressString(event.topic[1]);
+  const spender =
+    asAddressString(value.spender ?? value.approve?.spender) || asAddressString(event.topic[2]);
+
+  const liveUntilRaw =
+    value.live_until_ledger ??
+    value.liveUntilLedger ??
+    value.expiration_ledger ??
+    value.expirationLedger ??
+    value.approve?.live_until_ledger ??
+    0;
+  const liveUntilLedger = Number(liveUntilRaw) || 0;
+
+  return {
+    contractId,
+    from: from || '',
+    spender: spender || '',
+    amount: formatTokenAmount(rawAmount),
+    rawAmount,
+    liveUntilLedger,
+    ledgerSeq: event.ledgerSeq ?? event.ledger,
+  };
+}
+
 /**
  * Helper to build the LedgerKey for a contract instance.
  */
@@ -1310,43 +1363,30 @@ export function parseSorobanDiagnosticError(
 
 export function decodeSorobanErrorFromXdr(xdrBase64: string): SorobanErrorInfo | null {
   try {
-    const xdr = StellarSdk.xdr.ScError.fromXDR(Buffer.from(xdrBase64, 'base64'));
-    
-    switch (xdr.switch()) {
-      case StellarSdk.xdr.ScErrorType.sceContract(): {
-        const contractError = xdr.contract();
-        return {
-          type: 'custom_error',
-          code: contractError.value(),
-          message: `Custom contract error ${contractError.value()}`,
-          details: `ScError(Contract, ${contractError.value()})`,
-        };
-      }
-      case StellarSdk.xdr.ScErrorType.scePanic(): {
-        const panic = xdr.panic();
-        return {
-          type: 'panic',
-          code: panic.value(),
-          message: parsePanicCode(panic.value()),
-          details: `ScError(Panic, ${panic.value()})`,
-        };
-      }
-      case StellarSdk.xdr.ScErrorType.sceHostError(): {
-        const hostError = xdr.hostError();
-        return {
-          type: 'host_error',
-          code: hostError.value(),
-          message: parseHostErrorCode(hostError.value()),
-          details: `ScError(HostError, ${hostError.value()})`,
-        };
-      }
-      default:
-        return {
-          type: 'invocation_error',
-          message: 'Unknown Soroban error type',
-          details: xdr.toXDR('base64'),
-        };
+    const scError = StellarSdk.xdr.ScError.fromXDR(Buffer.from(xdrBase64, 'base64'));
+    const errorType = scError.switch();
+    const typeName: string = (errorType as { name?: string }).name ?? String(errorType);
+
+    // The sceContract arm carries a ScErrorCode in contractCode()
+    if (typeName === 'sceContract') {
+      const contractCode = scError.contractCode();
+      return {
+        type: 'custom_error',
+        code: contractCode,
+        message: `Custom contract error (${contractCode})`,
+        details: `ScError(sceContract, ${contractCode})`,
+      };
     }
+
+    // All other system-level errors (sceWasmVm, sceContext, sceStorage, sceObject,
+    // sceCrypto, sceEvents, sceBudget, sceValue, sceAuth) carry a ScErrorCode in code()
+    const code = scError.code() as unknown as { name: string; value: number };
+    return {
+      type: 'host_error',
+      code: code.value,
+      message: `Soroban ${typeName} error: ${code.name} (${code.value})`,
+      details: `ScError(${typeName}, ${code.name})`,
+    };
   } catch {
     return null;
   }

@@ -8,6 +8,8 @@
     "packages/*"
   ],
   "scripts": {
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
     "dev": "turbo dev",
     "dev:api": "npm run dev --workspace=api",
     "dev:worker": "npm run dev:worker --workspace=api",
@@ -32,9 +34,13 @@
     "verify:migrations:dry-run": "npx tsx scripts/verify-migrations.ts --dry-run",
     "verify:migrations:shadow": "npx tsx scripts/verify-migrations-shadow.ts",
     "test:scripts": "vitest run scripts/verify-migrations.test.ts scripts/verify-migrations-shadow.test.ts",
+    "validate:dependabot": "node scripts/validate-dependabot.js",
     "prepare": "husky"
   },
   "packageManager": "npm@10.8.2",
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@prisma/client": "^6.19.3"
   },
