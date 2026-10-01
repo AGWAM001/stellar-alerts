@@ -9,7 +9,6 @@
  *  4. Reset helpers restore counter state.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Decimal } from '@prisma/client/runtime/library';
 
 import {
   makeUser,
@@ -165,10 +164,10 @@ describe('makePayment', () => {
     expect(a.txHash).not.toBe(b.txHash);
   });
 
-  it('amount is a Prisma Decimal instance', () => {
+  it('amount is a string with correct decimal precision', () => {
     const p = makePayment();
-    expect(p.amount).toBeInstanceOf(Decimal);
-    expect(p.amount.toString()).toBe('10.0000000');
+    expect(typeof p.amount).toBe('string');
+    expect(p.amount).toBe('10.0000000');
   });
 
   it('merges overrides correctly', () => {
@@ -193,11 +192,11 @@ describe('makePayment', () => {
 
 describe('invalidPaymentFixtures', () => {
   it('negativeAmount is less than zero', () => {
-    expect(invalidPaymentFixtures.negativeAmount.amount.toNumber()).toBeLessThan(0);
+    expect(Number(invalidPaymentFixtures.negativeAmount.amount)).toBeLessThan(0);
   });
 
   it('zeroAmount equals zero', () => {
-    expect(invalidPaymentFixtures.zeroAmount.amount.toNumber()).toBe(0);
+    expect(Number(invalidPaymentFixtures.zeroAmount.amount)).toBe(0);
   });
 
   it('emptyTxHash has an empty txHash', () => {

@@ -8,15 +8,13 @@
  *   vi.mocked(prisma.payment.create).mockResolvedValue(makePayment({ asset: 'USDC' }));
  */
 
-import { Decimal } from '@prisma/client/runtime/library';
-
 /** Minimal shape of a Prisma Payment row as returned by the client. */
 export interface PaymentRecord {
   id: string;
   walletId: string;
   txHash: string;
   fromAddress: string;
-  amount: Decimal;
+  amount: string;
   asset: string;
   assetIssuer: string | null;
   memo: string | null;
@@ -44,7 +42,7 @@ export function makePayment(overrides: Partial<PaymentRecord> = {}): PaymentReco
     walletId: `wallet-1`,
     txHash,
     fromAddress: SENDER_ADDRESS,
-    amount: new Decimal('10.0000000'),
+    amount: '10.0000000',
     asset: 'XLM',
     assetIssuer: null,
     memo: null,
@@ -77,10 +75,10 @@ export function resetPaymentCounter(): void {
  */
 export const invalidPaymentFixtures = {
   /** Negative amount — violates domain invariant. */
-  negativeAmount: makePayment({ amount: new Decimal('-1') }),
+  negativeAmount: makePayment({ amount: '-1' }),
 
   /** Zero amount — economically invalid on Stellar. */
-  zeroAmount: makePayment({ amount: new Decimal('0') }),
+  zeroAmount: makePayment({ amount: '0' }),
 
   /** Empty txHash — violates the UNIQUE NOT NULL constraint. */
   emptyTxHash: makePayment({ txHash: '' }),
