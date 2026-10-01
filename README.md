@@ -90,50 +90,10 @@ Fund a fresh keypair on Stellar Testnet via Friendbot and verify automated inges
 npx tsx --env-file=apps/api/.env apps/api/scripts/seed-and-trigger-payment.ts
 ```
 
-### 6. Streaming Interfaces & Daemon Mode
-
-#### GraphQL Subscriptions
-Access real-time event streaming via GraphQL at `http://localhost:3001/graphql`:
-```graphql
-subscription {
-  paymentStream(filter: { walletId: "your-wallet-id" }) {
-    id
-    fromAddress
-    amount
-    asset
-    receivedAt
-  }
-}
-```
-
-#### gRPC Streaming
-Connect to the gRPC server on port 50051 for enterprise-grade streaming:
+### 6. Validate Dependabot Configuration
+Verify the automated dependency update configuration:
 ```bash
-# Using grpcurl
-grpcurl -plaintext localhost:50051 stellar.LedgerService/StreamLedgerEvents
-```
-
-#### Interactive TUI Dashboard
-Launch the terminal-based real-time monitoring dashboard:
-```bash
-npm run cli:tui
-```
-
-#### Headless Daemon Mode
-Install and run as a system service:
-
-**Linux (systemd):**
-```bash
-npm run daemon:install:systemd
-sudo systemctl daemon-reload
-sudo systemctl enable stellar-alerts
-sudo systemctl start stellar-alerts
-```
-
-**macOS (launchd):**
-```bash
-npm run daemon:install:launchd
-launchctl load ~/Library/LaunchAgents/com.stellaralerts.daemon.plist
+npm run validate:dependabot
 ```
 
 ---
@@ -154,6 +114,18 @@ launchctl load ~/Library/LaunchAgents/com.stellaralerts.daemon.plist
 Join our official Telegram community to ask questions, chat with maintainers, discuss Drips Wave sprint tasks, and stay updated on new releases:
 
 👉 **[Join Stellar Alerts on Telegram](https://t.me/+uElHrnWMb180MWM0)**
+
+---
+
+## 🤖 Automated Dependency Management
+
+Dependabot is configured to automatically update dependencies weekly with grouped PRs to reduce notification noise:
+
+- **JavaScript/npm workspace dependencies**: All workspace packages (`apps/*`, `packages/*`) are monitored for updates
+- **Docker images**: Base images in `docker-compose.yml` (postgres, redis, toxiproxy) are monitored 
+- **GitHub Actions**: Workflow dependencies (actions/checkout, setup-node, etc.) are monitored
+
+All updates run weekly on Mondays and are grouped by ecosystem to minimize PR volume. The configuration can be validated with `npm run validate:dependabot`.
 
 ---
 
