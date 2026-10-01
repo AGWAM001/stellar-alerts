@@ -1,6 +1,7 @@
 import { prisma, prismaRead } from '../../lib/prisma';
 import { isSupportedFiatCurrency, convertUsdToFiat, SupportedFiatCurrency } from '../../lib/exchange-rates';
 import { addDifferentialPrivacyNoise } from '../../utils/differential-privacy';
+import { withSummaryCache } from '../../lib/summaryCache';
 
 export type PaymentSortField = 'receivedAt' | 'amount' | 'asset';
 export type SortOrder = 'asc' | 'desc';
@@ -61,44 +62,55 @@ export class PaymentsService {
       take: limit,
     });
   }
-
+  
   async getPaymentsSummary(userId: string, walletId?: string, fiatCurrency?: string) {
-    const where: any = walletId
-      ? { walletId, wallet: { userId } }
-      : { wallet: { userId } };
+    const { value } = await withSummaryCache({
+      kind: 'payments',
+      userId,
+      walletId,
+      fiat: fiatCurrency,
+      load: async () => {
+        const where: any = walletId
+          ? { walletId, wallet: { userId } }
+          : { wallet: { userId } };
 
-    console.log(
-      `[PaymentsService] Fetching summary for user ${userId}${
+         console.log(
+        `[PaymentsService] Fetching summary for user ${userId}${
         walletId ? ` (wallet ${walletId})` : ' (all wallets)'
-      }`
-    );
+        }`,
+       );
 
-    const result = await prismaRead.payment.aggregate({
-      where,
-      _sum: { amount: true },
-      _count: { id: true },
-    });
+        const result = await prismaRead.payment.aggregate({
+          where,
+          _sum: { amount: true },
+          _count: { id: true },
+        });
 
     return {
       totalReceived: result._sum.amount || 0,
       paymentCount: result._count.id || 0,
     };
 
-    if (fiatCurrency && isSupportedFiatCurrency(fiatCurrency)) {
-      const conversion = await convertUsdToFiat(
-        totalReceivedUsd,
-        fiatCurrency as SupportedFiatCurrency,
-      );
-      summary.fiatConversion = {
-        currency: conversion.currency,
-        convertedTotal: conversion.convertedAmount,
-        exchangeRate: conversion.rate,
-      };
-    }
+        if (fiatCurrency && isSupportedFiatCurrency(fiatCurrency)) {
+          const conversion = await convertUsdToFiat(
+            totalReceivedUsd,
+            fiatCurrency as SupportedFiatCurrency,
+          );
+          summary.fiatConversion = {
+            currency: conversion.currency,
+            convertedTotal: conversion.convertedAmount,
+            exchangeRate: conversion.rate,
+          };
+        }
 
-    return summary;
+        return summary;
+      },
+    });
+
+    return value;
   }
 
+  
   /**
    * Fetches public volume statistics protected with Laplace differential privacy noise.
    * Epsilon parameter controls privacy budget (lower epsilon = more privacy/noise).
