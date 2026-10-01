@@ -472,6 +472,9 @@ export const stellar = {
         options.signal,
         'Horizon',
       );
+      const masterSigner = account.signers.find(
+        (s) => s.key === (account.account_id || (account as any).id),
+      );
       return {
         signers: account.signers.map((s) => ({ key: s.key, weight: s.weight })),
         thresholds: {
@@ -479,7 +482,7 @@ export const stellar = {
           medium: account.thresholds.med_threshold,
           high: account.thresholds.high_threshold,
         },
-        masterWeight: Number.isFinite(account.master_weight) ? Number(account.master_weight) : 0,
+        masterWeight: masterSigner ? Number(masterSigner.weight) : 0,
       };
     } catch (error: any) {
       console.error(`[Stellar] Error fetching signers for account ${publicKey}:`, error?.message || error);
