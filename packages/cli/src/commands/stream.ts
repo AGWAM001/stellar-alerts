@@ -75,6 +75,25 @@ export function registerStreamCommands(program: Command): void {
     .option('--max-retries <number>', 'Consecutive reconnect attempts before giving up (default: unlimited)')
     .option('--max-backoff <ms>', 'Upper bound for the reconnect delay in milliseconds', '60000')
     .action(async (options: WatchOptions) => {
+      const abortController = new AbortController();
+      const onSigInt = () => {
+        if (abortController.signal.aborted) {
+          // Second signal: the user wants out now.
+          process.exit(130);
+        }
+        abortController.abort();
+      };
+      const onSigTerm = () => {
+        if (abortController.signal.aborted) {
+          // Second signal: the user wants out now.
+          process.exit(130);
+        }
+        abortController.abort();
+      };
+
+      process.on('SIGINT', onSigInt);
+      process.on('SIGTERM', onSigTerm);
+
       try {
         const auth = resolveAuth(options.token, program.opts().apiUrl);
         const client = new ApiClient(auth.apiUrl, auth.token);
@@ -85,22 +104,6 @@ export function registerStreamCommands(program: Command): void {
           process.exitCode = 1;
           return;
         }
-
-        const abortController = new AbortController();
-        process.on('SIGINT', () => {
-          if (abortController.signal.aborted) {
-            // Second signal: the user wants out now.
-            process.exit(130);
-          }
-          abortController.abort();
-        });
-        process.on('SIGTERM', () => {
-          if (abortController.signal.aborted) {
-            // Second signal: the user wants out now.
-            process.exit(130);
-          }
-          abortController.abort();
-        });
 
         const store = options.resume === false
           ? undefined
@@ -140,6 +143,9 @@ export function registerStreamCommands(program: Command): void {
       } catch (error) {
         console.error(chalk.red(`\n❌ Error: ${(error as Error).message}`));
         process.exitCode = 1;
+      } finally {
+        process.off('SIGINT', onSigInt);
+        process.off('SIGTERM', onSigTerm);
       }
     });
 
