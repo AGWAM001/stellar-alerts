@@ -2,12 +2,13 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { createWebhookSchema, webhookParamsSchema, listWebhookLogsQuerySchema } from './webhooks.schema';
 import { webhooksService } from './webhooks.service';
 import { CursorError } from '../../utils/pagination';
+import { NotFoundError, zodValidationError } from '../../lib/errors';
 
 export class WebhooksController {
   async addWebhook(request: FastifyRequest, reply: FastifyReply) {
     const parsed = createWebhookSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.status(400).send({ error: 'Invalid payload', details: parsed.error.format() });
+      throw zodValidationError(parsed, 'Invalid payload');
     }
 
     const userId = (request as any).user.id;
@@ -24,7 +25,7 @@ export class WebhooksController {
   async deleteWebhook(request: FastifyRequest, reply: FastifyReply) {
     const parsed = webhookParamsSchema.safeParse(request.params);
     if (!parsed.success) {
-      return reply.status(400).send({ error: 'Invalid parameters', details: parsed.error.format() });
+      throw zodValidationError(parsed, 'Invalid parameters');
     }
 
     try {
@@ -33,7 +34,7 @@ export class WebhooksController {
       return reply.send({ success: true });
     } catch (error: any) {
       if (error.message === 'Webhook not found') {
-        return reply.status(404).send({ error: 'Not Found', message: error.message });
+        throw new NotFoundError(error.message);
       }
       throw error;
     }
@@ -42,7 +43,7 @@ export class WebhooksController {
   async testWebhook(request: FastifyRequest, reply: FastifyReply) {
     const parsed = webhookParamsSchema.safeParse(request.params);
     if (!parsed.success) {
-      return reply.status(400).send({ error: 'Invalid parameters', details: parsed.error.format() });
+      throw zodValidationError(parsed, 'Invalid parameters');
     }
 
     try {
@@ -51,7 +52,7 @@ export class WebhooksController {
       return reply.send({ success: result.success, result });
     } catch (error: any) {
       if (error.message === 'Webhook not found') {
-        return reply.status(404).send({ error: 'Not Found', message: error.message });
+        throw new NotFoundError(error.message);
       }
       throw error;
     }
@@ -60,12 +61,12 @@ export class WebhooksController {
   async getWebhookLogs(request: FastifyRequest, reply: FastifyReply) {
     const params = webhookParamsSchema.safeParse(request.params);
     if (!params.success) {
-      return reply.status(400).send({ error: 'Invalid parameters', details: params.error.format() });
+      throw zodValidationError(params, 'Invalid parameters');
     }
 
     const query = listWebhookLogsQuerySchema.safeParse(request.query);
     if (!query.success) {
-      return reply.status(400).send({ error: 'Invalid query', details: query.error.format() });
+      throw zodValidationError(query, 'Invalid query');
     }
 
     const userId = (request as any).user.id;
@@ -82,7 +83,7 @@ export class WebhooksController {
         return reply.status(400).send({ error: 'Invalid cursor', message: err.message });
       }
       if (err.message === 'Webhook not found') {
-        return reply.status(404).send({ error: 'Not Found', message: err.message });
+        throw new NotFoundError(err.message);
       }
       throw err;
     }

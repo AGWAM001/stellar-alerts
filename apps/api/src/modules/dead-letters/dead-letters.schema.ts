@@ -17,3 +17,18 @@ export const listDeadLettersQuerySchema = z.object({
 export const suppressDeadLetterSchema = z.object({
   note: z.string().max(2000).optional(),
 });
+
+export const sandboxReplayIdSchema = z.object({
+  id: z.string().min(1),
+});
+
+export const sandboxReplayInputSchema = z.object({
+  mockStatusCode: z.coerce.number().int().min(100).max(599).optional().default(200),
+  mockResponseBody: z.string().optional(),
+  mockResponseHeaders: z.record(z.string()).optional(),
+});
+
+export const listSandboxReplaysQuerySchema = z.object({
+  limit: limitSchema,
+  cursor: cursorSchema,
+});

@@ -10,6 +10,7 @@ import {
   CURSOR_ORDER_BY,
   CursorError,
 } from '../../utils/pagination';
+import { dynamicPayloadTransformer, PayloadTransformationRule } from './payload-transformer';
 
 export interface WebhookTestResult {
   success: boolean;
@@ -226,14 +227,20 @@ export class WebhooksService {
     ].join(':');
     const secret = cryptoVault.decrypt(encrypted);
 
-    const payload = JSON.stringify({
+    let rawPayload: Record<string, any> = {
       event: 'webhook.ping',
       timestamp: new Date().toISOString(),
       data: {
         webhookId: webhook.id,
         message: 'Test ping dispatched from Stellar Alerts',
       },
-    });
+    };
+
+    if (webhook.payloadTemplate) {
+      rawPayload = dynamicPayloadTransformer.transform(rawPayload, webhook.payloadTemplate);
+    }
+
+    const payload = JSON.stringify(rawPayload);
 
     if (!this.keyRotationManager.getKeyState(webhook.id)) {
       this.keyRotationManager.setKeyState(webhook.id, { activeSecret: secret });

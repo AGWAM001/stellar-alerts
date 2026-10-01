@@ -6,6 +6,7 @@ import { generateTransactionReceiptPdf } from '../../utils/receipt-generator';
 import { prismaRead, prisma } from '../../lib/prisma';
 import { paymentsService } from './payments.service';
 import { CursorError, cursorSchema, limitSchema } from '../../utils/pagination';
+import { AuthenticationError, AuthorizationError, NotFoundError, ValidationError, zodValidationError } from '../../lib/errors';
 
 const getPaymentsSchema = z
   .object({
@@ -50,10 +51,10 @@ export class PaymentsController {
   async getPayments(request: FastifyRequest, reply: FastifyReply) {
     const parsed = getPaymentsSchema.safeParse(request.query);
     if (!parsed.success) {
-      return reply.status(400).send({ error: 'Invalid query', details: parsed.error.format() });
+      throw zodValidationError(parsed, 'Invalid query');
     }
     if (!request.user) {
-      return reply.status(401).send({ error: 'Unauthorized', message: 'User not authenticated' });
+      throw new AuthenticationError('User not authenticated');
     }
 
     try {
@@ -83,10 +84,10 @@ export class PaymentsController {
   async getSummary(request: FastifyRequest, reply: FastifyReply) {
     const parsed = getSummarySchema.safeParse(request.query);
     if (!parsed.success) {
-      return reply.status(400).send({ error: 'Invalid query', details: parsed.error.format() });
+      throw zodValidationError(parsed, 'Invalid query');
     }
     if (!request.user) {
-      return reply.status(401).send({ error: 'Unauthorized', message: 'User not authenticated' });
+      throw new AuthenticationError('User not authenticated');
     }
 
     const summary = await paymentsService.getPaymentsSummary(
@@ -104,10 +105,10 @@ export class PaymentsController {
   async getTaxExport(request: FastifyRequest, reply: FastifyReply) {
     const parsed = getTaxExportSchema.safeParse(request.query);
     if (!parsed.success) {
-      return reply.status(400).send({ error: 'Invalid query', details: parsed.error.format() });
+      throw zodValidationError(parsed, 'Invalid query');
     }
     if (!request.user) {
-      return reply.status(401).send({ error: 'Unauthorized', message: 'User not authenticated' });
+      throw new AuthenticationError('User not authenticated');
     }
 
     const { items: payments } = await paymentsService.getPayments(request.user.id, parsed.data.walletId, 5000);
@@ -133,10 +134,10 @@ export class PaymentsController {
   async getLedgerPdfExport(request: FastifyRequest, reply: FastifyReply) {
     const parsed = getLedgerPdfExportSchema.safeParse(request.query);
     if (!parsed.success) {
-      return reply.status(400).send({ error: 'Invalid query', details: parsed.error.format() });
+      throw zodValidationError(parsed, 'Invalid query');
     }
     if (!request.user) {
-      return reply.status(401).send({ error: 'Unauthorized', message: 'User not authenticated' });
+      throw new AuthenticationError('User not authenticated');
     }
 
     const periodEnd = parsed.data.periodEnd ?? new Date();
@@ -181,10 +182,10 @@ export class PaymentsController {
   async getCrossLedgerAnalytics(request: FastifyRequest, reply: FastifyReply) {
     const parsed = getCrossLedgerSchema.safeParse(request.query);
     if (!parsed.success) {
-      return reply.status(400).send({ error: 'Invalid query', details: parsed.error.format() });
+      throw zodValidationError(parsed, 'Invalid query');
     }
     if (!request.user) {
-      return reply.status(401).send({ error: 'Unauthorized', message: 'User not authenticated' });
+      throw new AuthenticationError('User not authenticated');
     }
 
     const analytics = await paymentsService.getCrossLedgerAnalytics(
@@ -196,12 +197,12 @@ export class PaymentsController {
 
   async getReceipt(request: FastifyRequest, reply: FastifyReply) {
     if (!request.user) {
-      return reply.status(401).send({ error: 'Unauthorized', message: 'User not authenticated' });
+      throw new AuthenticationError('User not authenticated');
     }
 
     const { txHash } = request.params as { txHash: string };
     if (!txHash) {
-      return reply.status(400).send({ error: 'Missing transaction hash parameter' });
+      throw new ValidationError('Missing transaction hash parameter');
     }
 
     const payment = await prisma.payment.findFirst({
@@ -221,11 +222,11 @@ export class PaymentsController {
     });
 
     if (!payment) {
-      return reply.status(404).send({ error: 'Payment transaction not found' });
+      throw new NotFoundError('Payment transaction not found');
     }
 
     if (payment.wallet.userId !== request.user.id) {
-      return reply.status(403).send({ error: 'Forbidden', message: 'Unauthorized access to transaction receipt' });
+      throw new AuthorizationError('Unauthorized access to transaction receipt');
     }
 
     const { buffer, verificationHash } = await generateTransactionReceiptPdf({
