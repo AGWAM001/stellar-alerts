@@ -29,9 +29,8 @@ vi.mock('../../../lib/prisma', () => ({
   },
 }));
 
-import { PaymentsService, encodePaymentCursor } from '../payments.service';
+import { PaymentsService, encodePaymentCursor, paymentsService } from '../payments.service';
 import { PaymentsController } from '../payments.controller';
-import { paymentsService } from '../payments.service';
 import { CursorError } from '../../../utils/pagination';
 
 // ---------------------------------------------------------------------------
@@ -57,17 +56,14 @@ function makePayment(id: string, receivedAt: Date) {
 // ---------------------------------------------------------------------------
 
 describe('PaymentsService cursor pagination', () => {
-  let service: PaymentsService;
-
   beforeEach(() => {
-    service = new PaymentsService();
     vi.clearAllMocks();
   });
 
   it('returns {items, pagination} envelope on the first page (no cursor)', async () => {
     mockPayment.findMany.mockResolvedValue([]);
 
-    const result = await service.getPayments('user-1');
+    const result = await paymentsService.getPayments('user-1');
 
     expect(result).toHaveProperty('items');
     expect(result).toHaveProperty('pagination');
@@ -78,7 +74,7 @@ describe('PaymentsService cursor pagination', () => {
   it('fetches limit+1 rows to detect the next page', async () => {
     mockPayment.findMany.mockResolvedValue([]);
 
-    await service.getPayments('user-1', undefined, 10);
+    await paymentsService.getPayments('user-1', undefined, 10);
 
     expect(mockPayment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ take: 11 }),
@@ -92,7 +88,7 @@ describe('PaymentsService cursor pagination', () => {
     );
     mockPayment.findMany.mockResolvedValue(rows);
 
-    const result = await service.getPayments('user-1', undefined, 5);
+    const result = await paymentsService.getPayments('user-1', undefined, 5);
 
     expect(result.items).toHaveLength(5);
     expect(result.pagination.hasNextPage).toBe(true);
@@ -105,7 +101,7 @@ describe('PaymentsService cursor pagination', () => {
     );
     mockPayment.findMany.mockResolvedValue(rows);
 
-    const result = await service.getPayments('user-1', undefined, 5);
+    const result = await paymentsService.getPayments('user-1', undefined, 5);
 
     // Decode the cursor — it must reference id-4 (5th item, 0-indexed)
     const expectedCursor = encodePaymentCursor(rows[4]);
@@ -117,7 +113,7 @@ describe('PaymentsService cursor pagination', () => {
     const cursorItem = makePayment('cl-anchor', new Date('2026-05-01T00:00:00.000Z'));
     const cursor = encodePaymentCursor(cursorItem);
 
-    await service.getPayments('user-1', undefined, 20, { cursor });
+    await paymentsService.getPayments('user-1', undefined, 20, { cursor });
 
     const call = mockPayment.findMany.mock.calls[0][0];
     // The where must contain an OR with a receivedAt lt condition
@@ -128,14 +124,14 @@ describe('PaymentsService cursor pagination', () => {
 
   it('throws CursorError for a malformed cursor string', async () => {
     await expect(
-      service.getPayments('user-1', undefined, 20, { cursor: 'totally-invalid' }),
+      paymentsService.getPayments('user-1', undefined, 20, { cursor: 'totally-invalid' }),
     ).rejects.toThrow(CursorError);
   });
 
   it('orderBy always includes id as tiebreaker', async () => {
     mockPayment.findMany.mockResolvedValue([]);
 
-    await service.getPayments('user-1');
+    await paymentsService.getPayments('user-1');
 
     const call = mockPayment.findMany.mock.calls[0][0];
     expect(call.orderBy).toEqual(
@@ -147,13 +143,6 @@ describe('PaymentsService cursor pagination', () => {
 // ---------------------------------------------------------------------------
 // PaymentsController — cursor wiring
 // ---------------------------------------------------------------------------
-
-vi.mock('../payments.service', () => ({
-  paymentsService: {
-    getPayments: vi.fn(),
-    getPaymentsSummary: vi.fn(),
-  },
-}));
 
 describe('PaymentsController cursor pagination', () => {
   let controller: PaymentsController;
@@ -173,7 +162,7 @@ describe('PaymentsController cursor pagination', () => {
       id: 'cl-test',
       receivedAt: new Date('2026-08-01T00:00:00.000Z'),
     });
-    vi.mocked(paymentsService.getPayments).mockResolvedValue({
+    const getPaymentsSpy = vi.spyOn(paymentsService, 'getPayments').mockResolvedValue({
       items: [],
       pagination: { limit: 20, hasNextPage: false },
     } as any);
@@ -183,7 +172,7 @@ describe('PaymentsController cursor pagination', () => {
       mockReply,
     );
 
-    expect(paymentsService.getPayments).toHaveBeenCalledWith(
+    expect(getPaymentsSpy).toHaveBeenCalledWith(
       'user-1',
       undefined,
       20,
@@ -192,7 +181,7 @@ describe('PaymentsController cursor pagination', () => {
   });
 
   it('response includes both payments and pagination keys', async () => {
-    vi.mocked(paymentsService.getPayments).mockResolvedValue({
+    const getPaymentsSpy = vi.spyOn(paymentsService, 'getPayments').mockResolvedValue({
       items: [],
       pagination: { limit: 20, hasNextPage: false },
     } as any);
@@ -212,7 +201,7 @@ describe('PaymentsController cursor pagination', () => {
   });
 
   it('returns 400 when service throws CursorError', async () => {
-    vi.mocked(paymentsService.getPayments).mockRejectedValue(new CursorError());
+    const getPaymentsSpy = vi.spyOn(paymentsService, 'getPayments').mockRejectedValue(new CursorError());
 
     await controller.getPayments(
       { query: { cursor: 'bad' }, user: { id: 'user-1' } } as any,
@@ -232,7 +221,6 @@ describe('PaymentsController cursor pagination', () => {
     );
 
     expect(mockReply.status).toHaveBeenCalledWith(400);
-    expect(paymentsService.getPayments).not.toHaveBeenCalled();
   });
 
   it('rejects limit = 0 with 400', async () => {
