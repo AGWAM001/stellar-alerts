@@ -1,33 +1,41 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const store = new Map<string, string>();
+const { store, mockRedis, getRedisStatusMock } = vi.hoisted(() => {
+  const store = new Map<string, string>();
 
-const mockRedis = {
-  get: vi.fn(async (key: string) => store.get(key) ?? null),
-  set: vi.fn(async (key: string, value: string, _mode?: string, _ttl?: number) => {
-    store.set(key, value);
-    return 'OK';
-  }),
-  del: vi.fn(async (...keys: string[]) => {
-    let n = 0;
-    for (const k of keys) {
-      if (store.delete(k)) n++;
-    }
-    return n;
-  }),
-  scan: vi.fn(async (_cursor: string, _match: string, pattern: string) => {
-    const keys = [...store.keys()].filter((k) => {
-      // naive * glob
-      const re = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
-      return re.test(k);
-    });
-    return ['0', keys];
-  }),
-};
+  const mockRedis = {
+    get: vi.fn(async (key: string) => store.get(key) ?? null),
+    set: vi.fn(async (key: string, value: string, _mode?: string, _ttl?: number) => {
+      store.set(key, value);
+      return 'OK';
+    }),
+    del: vi.fn(async (...keys: string[]) => {
+      let n = 0;
+      for (const k of keys) {
+        if (store.delete(k)) n++;
+      }
+      return n;
+    }),
+    // ioredis: scan(cursor, 'MATCH', pattern, 'COUNT', count)
+    scan: vi.fn(async (_cursor: string, _match: string, pattern: string) => {
+      const keys = [...store.keys()].filter((k) => {
+        const re = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+        return re.test(k);
+      });
+      return ['0', keys];
+    }),
+  };
+
+  return {
+    store,
+    mockRedis,
+    getRedisStatusMock: vi.fn(() => 'ready' as const),
+  };
+});
 
 vi.mock('../redis', () => ({
   redis: mockRedis,
-  getRedisStatus: vi.fn(() => 'ready'),
+  getRedisStatus: getRedisStatusMock,
 }));
 
 import {
@@ -43,12 +51,20 @@ describe('summaryCache (#285)', () => {
   beforeEach(() => {
     store.clear();
     vi.clearAllMocks();
+    getRedisStatusMock.mockReturnValue('ready');
   });
 
   it('primary: builds versioned keys including user and optional wallet/fiat', () => {
     expect(
-      buildSummaryCacheKey({ kind: 'payments', userId: 'u1', walletId: 'w1', fiat: 'NGN' }),
-    ).toBe(`summary:${SUMMARY_CACHE_VERSION}:payments:user:u1:wallet:w1:fiat:ngn`);
+      buildSummaryCacheKey({
+        kind: 'payments',
+        userId: 'u1',
+        walletId: 'w1',
+        fiat: 'NGN',
+      }),
+    ).toBe(
+      `summary:${SUMMARY_CACHE_VERSION}:payments:user:u1:wallet:w1:fiat:ngn`,
+    );
   });
 
   it('primary: cache hit returns payload without calling loader twice', async () => {
@@ -96,10 +112,16 @@ describe('summaryCache (#285)', () => {
     const deleted = await invalidateUserSummaryCache('u1', mockRedis as any);
     expect(deleted).toBeGreaterThanOrEqual(2);
     expect(
-      await getCachedSummary(buildSummaryCacheKey({ kind: 'payments', userId: 'u1' }), mockRedis as any),
+      await getCachedSummary(
+        buildSummaryCacheKey({ kind: 'payments', userId: 'u1' }),
+        mockRedis as any,
+      ),
     ).toBeNull();
     expect(
-      await getCachedSummary(buildSummaryCacheKey({ kind: 'payments', userId: 'u2' }), mockRedis as any),
+      await getCachedSummary(
+        buildSummaryCacheKey({ kind: 'payments', userId: 'u2' }),
+        mockRedis as any,
+      ),
     ).not.toBeNull();
   });
 
