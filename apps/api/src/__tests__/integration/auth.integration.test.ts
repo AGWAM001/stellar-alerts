@@ -4,8 +4,7 @@ import { TestDatabase, setupTestIsolation, cleanupTestIsolation } from '../utils
 import { 
   createTestUser, 
   makeAuthenticatedRequest, 
-  makeUnauthenticatedRequest,
-  cleanupTestUsers 
+  makeUnauthenticatedRequest 
 } from '../utils/auth-helpers';
 
 describe('Authentication Integration Tests', () => {
@@ -93,11 +92,11 @@ describe('Authentication Integration Tests', () => {
         .get('/auth/me')
         .expect(401);
 
-      expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'You must be logged in to perform this action.',
+      expect(response.body.error).toMatchObject({
         code: 'AUTH_REQUIRED',
+        message: 'You must be logged in to perform this action.',
       });
+      expect(response.body.error.requestId).toBeDefined();
     });
 
     it('should reject requests with malformed Authorization header', async () => {
@@ -106,11 +105,11 @@ describe('Authentication Integration Tests', () => {
         .set('Authorization', 'NotBearer invalid-token')
         .expect(401);
 
-      expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'You must be logged in to perform this action.',
+      expect(response.body.error).toMatchObject({
         code: 'AUTH_REQUIRED',
+        message: 'You must be logged in to perform this action.',
       });
+      expect(response.body.error.requestId).toBeDefined();
     });
 
     it('should reject requests with invalid JWT token', async () => {
@@ -119,11 +118,11 @@ describe('Authentication Integration Tests', () => {
         .set('Authorization', 'Bearer invalid.jwt.token')
         .expect(401);
 
-      expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'Invalid or expired session token.',
+      expect(response.body.error).toMatchObject({
         code: 'INVALID_TOKEN',
+        message: 'Invalid or expired session token.',
       });
+      expect(response.body.error.requestId).toBeDefined();
     });
 
     it('should reject requests with expired JWT token', async () => {
@@ -135,11 +134,11 @@ describe('Authentication Integration Tests', () => {
         .set('Authorization', `Bearer ${expiredToken}`)
         .expect(401);
 
-      expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'Invalid or expired session token.',
+      expect(response.body.error).toMatchObject({
         code: 'INVALID_TOKEN',
+        message: 'Invalid or expired session token.',
       });
+      expect(response.body.error.requestId).toBeDefined();
     });
   });
 
@@ -163,8 +162,11 @@ describe('Authentication Integration Tests', () => {
         .send({ email: 'invalid-email' })
         .expect(400);
 
-      expect(response.body).toHaveProperty('error', 'Invalid email');
-      expect(response.body).toHaveProperty('details');
+      expect(response.body.error).toMatchObject({
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid email',
+      });
+      expect(response.body.error.details).toBeDefined();
     });
 
     it('should reject magic link request without email', async () => {
@@ -173,7 +175,10 @@ describe('Authentication Integration Tests', () => {
         .send({})
         .expect(400);
 
-      expect(response.body).toHaveProperty('error', 'Invalid email');
+      expect(response.body.error).toMatchObject({
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid email',
+      });
     });
   });
 
@@ -183,11 +188,11 @@ describe('Authentication Integration Tests', () => {
         .post('/auth/mfa/setup')
         .expect(401);
 
-      expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'You must be logged in to perform this action.',
+      expect(response.body.error).toMatchObject({
         code: 'AUTH_REQUIRED',
+        message: 'You must be logged in to perform this action.',
       });
+      expect(response.body.error.requestId).toBeDefined();
     });
 
     it('should allow authenticated access to MFA status', async () => {

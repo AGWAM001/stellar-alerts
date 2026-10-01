@@ -101,17 +101,27 @@ export function makeUnauthenticatedRequest(server: TestServer) {
  * Cleanup test users and related data
  */
 export async function cleanupTestUsers(): Promise<void> {
-  // Clean up in correct order due to foreign key constraints
+  // Clean up dependent rows before users to satisfy foreign-key constraints.
+  // Mirrors the ordering in TestDatabase.cleanup() (test-db.ts).
+  const userWhere = {
+    email: {
+      contains: 'test.example'
+    }
+  } as const;
+
+  await prisma.notificationPreference.deleteMany({ where: { user: userWhere } });
+  await prisma.deadLetter.deleteMany({ where: { user: userWhere } });
+  await prisma.notificationDeliveryAttempt.deleteMany({ where: { user: userWhere } });
+  await prisma.notificationDelivery.deleteMany({ where: { user: userWhere } });
+  await prisma.refreshSession.deleteMany({ where: { user: userWhere } });
+  await prisma.mfaRecoveryCode.deleteMany({ where: { user: userWhere } });
+
   await prisma.wallet.deleteMany({
     where: {
-      user: {
-        email: {
-          contains: 'test.example'
-        }
-      }
+      user: userWhere
     }
   });
-  
+
   await prisma.user.deleteMany({
     where: {
       email: {

@@ -65,11 +65,11 @@ describe('Comprehensive Validation and Authorization Tests', () => {
 
         const response = await request.expect(401);
 
-        expect(response.body).toEqual({
-          error: 'Unauthorized',
-          message: 'You must be logged in to perform this action.',
+        expect(response.body.error).toMatchObject({
           code: 'AUTH_REQUIRED',
+          message: 'You must be logged in to perform this action.',
         });
+        expect(response.body.error.requestId).toBeDefined();
       });
     });
 
@@ -88,11 +88,11 @@ describe('Comprehensive Validation and Authorization Tests', () => {
           .set('Authorization', header)
           .expect(401);
 
-        expect(response.body).toEqual({
-          error: 'Unauthorized',
-          message: 'You must be logged in to perform this action.',
+        expect(response.body.error).toMatchObject({
           code: 'AUTH_REQUIRED',
+          message: 'You must be logged in to perform this action.',
         });
+        expect(response.body.error.requestId).toBeDefined();
       }
     });
 
@@ -110,11 +110,11 @@ describe('Comprehensive Validation and Authorization Tests', () => {
           .set('Authorization', `Bearer ${token}`)
           .expect(401);
 
-        expect(response.body).toEqual({
-          error: 'Unauthorized',
-          message: 'Invalid or expired session token.',
+        expect(response.body.error).toMatchObject({
           code: 'INVALID_TOKEN',
+          message: 'Invalid or expired session token.',
         });
+        expect(response.body.error.requestId).toBeDefined();
       }
     });
   });
@@ -141,8 +141,11 @@ describe('Comprehensive Validation and Authorization Tests', () => {
             .send(payload)
             .expect(400);
 
-          expect(response.body).toHaveProperty('error', 'Invalid payload');
-          expect(response.body).toHaveProperty('details');
+          expect(response.body.error).toMatchObject({
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid payload',
+          });
+          expect(response.body.error.details).toBeDefined();
         }
       });
 
@@ -166,7 +169,7 @@ describe('Comprehensive Validation and Authorization Tests', () => {
             .send({ publicKey })
             .expect(400);
 
-          expect(response.body.details.publicKey._errors).toContain(
+          expect(response.body.error.details.publicKey._errors).toContain(
             'Invalid Stellar public key format or checksum'
           );
         }
@@ -193,8 +196,8 @@ describe('Comprehensive Validation and Authorization Tests', () => {
             .send({ whatsappNumber, whatsappEnabled: true })
             .expect(400);
 
-          expect(response.body).toEqual({
-            error: 'Invalid WhatsApp preferences',
+          expect(response.body.error).toMatchObject({
+            code: 'INVALID_WHATSAPP_PREFERENCES',
             message: 'Invalid WhatsApp number. Use E.164 format, e.g. +14155551234.',
           });
         }
@@ -220,8 +223,8 @@ describe('Comprehensive Validation and Authorization Tests', () => {
             .send({ channel })
             .expect(400);
 
-          expect(response.body).toEqual({
-            error: 'Invalid channel',
+          expect(response.body.error).toMatchObject({
+            code: 'INVALID_CHANNEL',
             message: 'channel must be "telegram"',
           });
         }
@@ -249,7 +252,10 @@ describe('Comprehensive Validation and Authorization Tests', () => {
             .get(`/dead-letters${query}`)
             .expect(400);
 
-          expect(response.body).toHaveProperty('error', 'Invalid query');
+          expect(response.body.error).toMatchObject({
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid query',
+          });
         }
       });
 
@@ -271,7 +277,10 @@ describe('Comprehensive Validation and Authorization Tests', () => {
             .get(`/dead-letters/${id}`)
             .expect(400);
 
-          expect(response.body).toHaveProperty('error', 'Invalid parameters');
+          expect(response.body.error).toMatchObject({
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid parameters',
+          });
         }
       });
     });
@@ -325,8 +334,8 @@ describe('Comprehensive Validation and Authorization Tests', () => {
           .get(`/wallets/${user.walletId}/ingestion-status`)
           .expect(404);
 
-        expect(unauthorizedResponse.body).toEqual({
-          error: 'Not Found',
+        expect(unauthorizedResponse.body.error).toMatchObject({
+          code: 'NOT_FOUND',
           message: 'Wallet not found',
         });
       });
@@ -376,7 +385,7 @@ describe('Comprehensive Validation and Authorization Tests', () => {
         // (not 403, which would leak existence information)
         const nonExistentId = 'cljk2h3k40000wq8t123456789';
         const response3 = await auth1.get(`/dead-letters/${nonExistentId}`).expect(404);
-        expect(response3.body.message).toContain('Dead letter');
+        expect(response3.body.error.message).toContain('Dead letter');
       });
     });
   });

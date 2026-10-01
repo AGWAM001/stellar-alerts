@@ -54,11 +54,11 @@ describe('Notification Preferences Integration Tests', () => {
         .get('/notifications/preferences')
         .expect(401);
 
-      expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'You must be logged in to perform this action.',
+      expect(response.body.error).toMatchObject({
         code: 'AUTH_REQUIRED',
+        message: 'You must be logged in to perform this action.',
       });
+      expect(response.body.error.requestId).toBeDefined();
     });
   });
 
@@ -133,11 +133,11 @@ describe('Notification Preferences Integration Tests', () => {
         .send(preferences)
         .expect(401);
 
-      expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'You must be logged in to perform this action.',
+      expect(response.body.error).toMatchObject({
         code: 'AUTH_REQUIRED',
+        message: 'You must be logged in to perform this action.',
       });
+      expect(response.body.error.requestId).toBeDefined();
     });
   });
 
@@ -156,8 +156,8 @@ describe('Notification Preferences Integration Tests', () => {
         .send(preferences)
         .expect(400);
 
-      expect(response.body).toEqual({
-        error: 'Invalid WhatsApp preferences',
+      expect(response.body.error).toMatchObject({
+        code: 'INVALID_WHATSAPP_PREFERENCES',
         message: 'Invalid WhatsApp number. Use E.164 format, e.g. +14155551234.',
       });
     });
@@ -196,8 +196,8 @@ describe('Notification Preferences Integration Tests', () => {
         .send(preferences)
         .expect(400);
 
-      expect(response.body).toEqual({
-        error: 'Invalid WhatsApp preferences',
+      expect(response.body.error).toMatchObject({
+        code: 'INVALID_WHATSAPP_PREFERENCES',
         message: 'A valid WhatsApp number is required to enable WhatsApp notifications',
       });
     });
@@ -213,8 +213,8 @@ describe('Notification Preferences Integration Tests', () => {
         .send({ channel: 'invalid-channel' })
         .expect(400);
 
-      expect(response.body).toEqual({
-        error: 'Invalid channel',
+      expect(response.body.error).toMatchObject({
+        code: 'INVALID_CHANNEL',
         message: 'channel must be "telegram"',
       });
     });
@@ -228,8 +228,8 @@ describe('Notification Preferences Integration Tests', () => {
         .send({})
         .expect(400);
 
-      expect(response.body).toEqual({
-        error: 'Invalid channel',
+      expect(response.body.error).toMatchObject({
+        code: 'INVALID_CHANNEL',
         message: 'channel must be "telegram"',
       });
     });
@@ -242,11 +242,11 @@ describe('Notification Preferences Integration Tests', () => {
         .send({ channel: 'telegram' })
         .expect(401);
 
-      expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'You must be logged in to perform this action.',
+      expect(response.body.error).toMatchObject({
         code: 'AUTH_REQUIRED',
+        message: 'You must be logged in to perform this action.',
       });
+      expect(response.body.error.requestId).toBeDefined();
     });
   });
 

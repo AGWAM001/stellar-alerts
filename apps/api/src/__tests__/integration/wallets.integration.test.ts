@@ -100,8 +100,9 @@ describe('Wallet Registration Integration Tests', () => {
         .send(walletData)
         .expect(400);
 
-      expect(response.body).toEqual({
-        error: 'Invalid payload',
+      expect(response.body.error).toMatchObject({
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid payload',
         details: expect.objectContaining({
           publicKey: expect.objectContaining({
             _errors: expect.arrayContaining(['Invalid Stellar public key format or checksum']),
@@ -123,8 +124,9 @@ describe('Wallet Registration Integration Tests', () => {
         .send(walletData)
         .expect(400);
 
-      expect(response.body).toEqual({
-        error: 'Invalid payload',
+      expect(response.body.error).toMatchObject({
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid payload',
         details: expect.objectContaining({
           publicKey: expect.objectContaining({
             _errors: expect.arrayContaining(['Required']),
@@ -147,8 +149,15 @@ describe('Wallet Registration Integration Tests', () => {
         .send(walletData)
         .expect(400);
 
-      expect(response.body).toHaveProperty('error', 'Invalid payload');
-      expect(response.body.details.publicKey._errors).toContain('Invalid Stellar public key format or checksum');
+      expect(response.body.error).toMatchObject({
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid payload',
+        details: expect.objectContaining({
+          publicKey: expect.objectContaining({
+            _errors: expect.arrayContaining(['Invalid Stellar public key format or checksum']),
+          }),
+        }),
+      });
     });
   });
 
@@ -166,11 +175,11 @@ describe('Wallet Registration Integration Tests', () => {
         .send(walletData)
         .expect(401);
 
-      expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'You must be logged in to perform this action.',
+      expect(response.body.error).toMatchObject({
         code: 'AUTH_REQUIRED',
+        message: 'You must be logged in to perform this action.',
       });
+      expect(response.body.error.requestId).toBeDefined();
     });
   });
 
@@ -201,8 +210,8 @@ describe('Wallet Registration Integration Tests', () => {
         .send(duplicateData)
         .expect(409);
 
-      expect(response.body).toEqual({
-        error: 'Conflict',
+      expect(response.body.error).toMatchObject({
+        code: 'CONFLICT',
         message: 'Wallet address is already registered',
       });
     });
@@ -229,8 +238,8 @@ describe('Wallet Registration Integration Tests', () => {
         .send(walletData)
         .expect(409);
 
-      expect(response.body).toEqual({
-        error: 'Conflict',
+      expect(response.body.error).toMatchObject({
+        code: 'CONFLICT',
         message: 'Wallet address is already registered',
       });
     });
@@ -291,11 +300,11 @@ describe('Wallet Registration Integration Tests', () => {
         .get('/wallets')
         .expect(401);
 
-      expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'You must be logged in to perform this action.',
+      expect(response.body.error).toMatchObject({
         code: 'AUTH_REQUIRED',
+        message: 'You must be logged in to perform this action.',
       });
+      expect(response.body.error.requestId).toBeDefined();
     });
   });
 

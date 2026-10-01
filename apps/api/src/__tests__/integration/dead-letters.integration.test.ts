@@ -56,11 +56,11 @@ describe('Delivery Logs (Dead Letters) Integration Tests', () => {
         .get('/dead-letters')
         .expect(401);
 
-      expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'You must be logged in to perform this action.',
+      expect(response.body.error).toMatchObject({
         code: 'AUTH_REQUIRED',
+        message: 'You must be logged in to perform this action.',
       });
+      expect(response.body.error.requestId).toBeDefined();
     });
 
     it('should accept pagination query parameters', async () => {
@@ -86,8 +86,11 @@ describe('Delivery Logs (Dead Letters) Integration Tests', () => {
         .get('/dead-letters?page=invalid&limit=abc')
         .expect(400);
 
-      expect(response.body).toHaveProperty('error', 'Invalid query');
-      expect(response.body).toHaveProperty('details');
+      expect(response.body.error).toMatchObject({
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid query',
+      });
+      expect(response.body.error.details).toBeDefined();
     });
   });
 
@@ -100,7 +103,10 @@ describe('Delivery Logs (Dead Letters) Integration Tests', () => {
         .get('/dead-letters/invalid-id')
         .expect(400);
 
-      expect(response.body).toHaveProperty('error', 'Invalid parameters');
+      expect(response.body.error).toMatchObject({
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid parameters',
+      });
     });
 
     it('should require authentication to get dead letter', async () => {
@@ -110,11 +116,11 @@ describe('Delivery Logs (Dead Letters) Integration Tests', () => {
         .get('/dead-letters/some-valid-id')
         .expect(401);
 
-      expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'You must be logged in to perform this action.',
+      expect(response.body.error).toMatchObject({
         code: 'AUTH_REQUIRED',
+        message: 'You must be logged in to perform this action.',
       });
+      expect(response.body.error.requestId).toBeDefined();
     });
   });
 
@@ -127,7 +133,10 @@ describe('Delivery Logs (Dead Letters) Integration Tests', () => {
         .post('/dead-letters/invalid-id/replay')
         .expect(400);
 
-      expect(response.body).toHaveProperty('error', 'Invalid parameters');
+      expect(response.body.error).toMatchObject({
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid parameters',
+      });
     });
 
     it('should require authentication to replay dead letter', async () => {
@@ -137,11 +146,11 @@ describe('Delivery Logs (Dead Letters) Integration Tests', () => {
         .post('/dead-letters/some-id/replay')
         .expect(401);
 
-      expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'You must be logged in to perform this action.',
+      expect(response.body.error).toMatchObject({
         code: 'AUTH_REQUIRED',
+        message: 'You must be logged in to perform this action.',
       });
+      expect(response.body.error.requestId).toBeDefined();
     });
 
     it('should return 404 for non-existent dead letter', async () => {
@@ -155,8 +164,8 @@ describe('Delivery Logs (Dead Letters) Integration Tests', () => {
         .post(`/dead-letters/${nonExistentId}/replay`)
         .expect(404);
 
-      expect(response.body).toEqual({
-        error: 'Not Found',
+      expect(response.body.error).toMatchObject({
+        code: 'NOT_FOUND',
         message: expect.stringContaining('Dead letter'),
       });
     });
@@ -172,7 +181,10 @@ describe('Delivery Logs (Dead Letters) Integration Tests', () => {
         .send({ note: 'Test suppression' })
         .expect(400);
 
-      expect(response.body).toHaveProperty('error', 'Invalid request');
+      expect(response.body.error).toMatchObject({
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid request',
+      });
     });
 
     it('should accept optional suppression note', async () => {
@@ -187,8 +199,8 @@ describe('Delivery Logs (Dead Letters) Integration Tests', () => {
         .send({ note: 'Test suppression note' })
         .expect(404);
 
-      expect(response.body).toEqual({
-        error: 'Not Found',
+      expect(response.body.error).toMatchObject({
+        code: 'NOT_FOUND',
         message: expect.stringContaining('Dead letter'),
       });
     });
@@ -205,8 +217,8 @@ describe('Delivery Logs (Dead Letters) Integration Tests', () => {
         .send({})
         .expect(404);
 
-      expect(response.body).toEqual({
-        error: 'Not Found',
+      expect(response.body.error).toMatchObject({
+        code: 'NOT_FOUND',
         message: expect.stringContaining('Dead letter'),
       });
     });
@@ -219,11 +231,11 @@ describe('Delivery Logs (Dead Letters) Integration Tests', () => {
         .send({ note: 'Test' })
         .expect(401);
 
-      expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'You must be logged in to perform this action.',
+      expect(response.body.error).toMatchObject({
         code: 'AUTH_REQUIRED',
+        message: 'You must be logged in to perform this action.',
       });
+      expect(response.body.error.requestId).toBeDefined();
     });
   });
 
@@ -256,8 +268,8 @@ describe('Delivery Logs (Dead Letters) Integration Tests', () => {
         .get(`/dead-letters/${nonExistentId}`)
         .expect(404);
 
-      expect(response.body).toEqual({
-        error: 'Not Found',
+      expect(response.body.error).toMatchObject({
+        code: 'NOT_FOUND',
         message: expect.stringContaining('Dead letter'),
       });
     });
