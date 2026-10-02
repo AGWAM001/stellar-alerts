@@ -52,6 +52,8 @@ For complete technical specifications, database schemas, and data flow details, 
 
 ## 🚀 Quick Start for Reviewers & Developers
 
+> **Note:** For a comprehensive setup guide including environment variables, wallet connection, and the freelancer alert quick start flow, please refer to **[docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md)**.
+
 ### 1. Installation & Monorepo Setup
 ```bash
 git clone https://github.com/stellar-alerts-labs/stellar-alerts.git
@@ -101,6 +103,7 @@ npm run validate:dependabot
 ## 🏆 Grant Qualification & Documentation
 
 - **Drips Wave Audit & Readiness Report**: See **[drips_wave_readiness_audit.md](file:///C:/Users/user/.gemini/antigravity-ide/brain/12528373-9966-4327-97c9-8c7388be13f6/drips_wave_readiness_audit.md)** for full reviewer scoring & roadmap.
+- **Local Setup & Freelancer Quick Start**: See **[docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md)**.
 - **Grant Submission Qualification Matrix**: See **[SUBMISSION.md](SUBMISSION.md)**.
 - **System Design & API Specs**: See **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 - **Contribution Guidelines**: See **[CONTRIBUTING.md](CONTRIBUTING.md)**.
