@@ -35,7 +35,6 @@
     "verify:migrations": "npx tsx scripts/verify-migrations.ts",
     "verify:migrations:dry-run": "npx tsx scripts/verify-migrations.ts --dry-run",
     "verify:migrations:shadow": "npx tsx scripts/verify-migrations-shadow.ts",
-    "test:scripts": "vitest run scripts/verify-migrations.test.ts scripts/verify-migrations-shadow.test.ts",
     "validate:dependabot": "node scripts/validate-dependabot.js",
     "prepare": "husky"
   },
