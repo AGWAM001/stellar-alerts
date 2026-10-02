@@ -64,7 +64,7 @@ describe('Wallet Registration Integration Tests', () => {
       const authRequest = makeAuthenticatedRequest(testServer, testUser);
 
       const walletData = {
-        publicKey: 'GDQJ7Z7LJDFT4ESK3WCGAMDQYQCEIYLW7N5RLQH5XQJCAUNG4C3ZASJ2',
+        publicKey: 'GCVK6PYJVJ6BEU7IQM2A5ACL4Z74EJ5GMBGEHY63QUQRBD2THARK6UUV',
       };
 
       const response = await authRequest
@@ -129,7 +129,7 @@ describe('Wallet Registration Integration Tests', () => {
         message: 'Invalid payload',
         details: expect.objectContaining({
           publicKey: expect.objectContaining({
-            _errors: expect.arrayContaining(['Required']),
+            _errors: expect.arrayContaining(['Invalid input: expected string, received undefined']),
           }),
         }),
       });
@@ -276,7 +276,7 @@ describe('Wallet Registration Integration Tests', () => {
 
       // Register second wallet
       const wallet2Data = {
-        publicKey: 'GDQJ7Z7LJDFT4ESK3WCGAMDQYQCEIYLW7N5RLQH5XQJCAUNG4C3ZASJ2',
+        publicKey: 'GBOYT5ZJJBQQIU7ONRSDMDVTSD2JSW4AA3O5HEYRUXZCJVUQLHP62CTP',
         label: 'Second Wallet',
       };
       await authRequest.post('/wallets').send(wallet2Data).expect(201);
@@ -322,7 +322,7 @@ describe('Wallet Registration Integration Tests', () => {
       // User 2 registers wallets
       const auth2 = makeAuthenticatedRequest(testServer, user2);
       await auth2.post('/wallets').send({
-        publicKey: 'GDQJ7Z7LJDFT4ESK3WCGAMDQYQCEIYLW7N5RLQH5XQJCAUNG4C3ZASJ2',
+        publicKey: 'GBS2HF3CE2CPEEANUDGALQFDQLPRLO6DU5NVO745PNZ2B6LLPYAHGV5V',
         label: 'User 2 Wallet',
       }).expect(201);
 

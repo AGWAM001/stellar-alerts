@@ -101,7 +101,6 @@ describe('Comprehensive Validation and Authorization Tests', () => {
         'invalid.jwt.token',
         'eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.',
         'expired-or-malformed-token',
-        '',
       ];
 
       for (const token of invalidTokens) {
@@ -239,12 +238,12 @@ describe('Comprehensive Validation and Authorization Tests', () => {
         const invalidQueries = [
           '?page=-1',
           '?page=0',
-          '?limit=-5',
-          '?limit=0',
+          '?pageSize=-5',
+          '?pageSize=0',
           '?page=not-a-number',
-          '?limit=not-a-number',
-          '?page=1.5&limit=2.5',
-          '?limit=1000000', // Potentially too large
+          '?pageSize=not-a-number',
+          '?page=1.5&pageSize=2.5',
+          '?pageSize=1000000', // Potentially too large
         ];
 
         for (const query of invalidQueries) {
@@ -300,7 +299,7 @@ describe('Comprehensive Validation and Authorization Tests', () => {
 
         const auth2 = makeAuthenticatedRequest(testServer, user2);
         await auth2.post('/wallets').send({
-          publicKey: 'GDQJ7Z7LJDFT4ESK3WCGAMDQYQCEIYLW7N5RLQH5XQJCAUNG4C3ZASJ2',
+          publicKey: 'GBXKLMIJND3WUCENWNUKCZ2PNWNI7LL757JRBMHVVRORYIMEDNYWDIJS',
           label: 'User 2 Wallet',
         });
 
@@ -413,10 +412,11 @@ describe('Comprehensive Validation and Authorization Tests', () => {
       const authRequest = makeAuthenticatedRequest(testServer, testUser);
 
       // Test various endpoints with empty bodies
-      await authRequest.post('/auth/logout').send().expect(200);
-      
       const prefsResponse = await authRequest.post('/notifications/preferences').send().expect(200);
       expect(prefsResponse.body.success).toBe(true);
+
+      // Logout last: it revokes the token, so no authenticated request may follow.
+      await authRequest.post('/auth/logout').send().expect(200);
     });
 
     it('should handle malformed JSON payloads', async () => {

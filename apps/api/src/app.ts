@@ -107,6 +107,24 @@ export const buildApp = async () => {
       });
     }
 
+    // Malformed JSON bodies (and other 4xx HTTP-level parse errors) thrown by
+    // Fastify itself before any handler runs — the client sent bad input, so a
+    // 500 would be misleading. The generic message stays safe for clients.
+    const err = error as any;
+    if (err.statusCode !== undefined && err.statusCode >= 400 && err.statusCode < 500) {
+      request.log.warn({ err: error }, 'Bad request rejected');
+      return reply.status(err.statusCode).send({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: err.code === 'FST_ERR_CTP_INVALID_JSON_PARSE_ERROR'
+            ? 'Malformed JSON in request body'
+            : 'Bad request',
+          ...(Array.isArray(err.errors) ? { details: err.errors } : {}),
+          requestId: request.requestId || request.id,
+        },
+      });
+    }
+
     request.log.error({ err: error }, 'Unhandled error');
     return reply.status(500).send({
       error: {
