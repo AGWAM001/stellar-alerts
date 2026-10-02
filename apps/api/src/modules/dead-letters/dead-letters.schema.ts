@@ -35,7 +35,12 @@ export const sandboxMockResponseSchema = z.object({
   status: z.number().int().min(100).max(599).default(200),
   // Response headers echoed back by the mock receiver (at most 50 entries).
   headers: z
-    .record(z.string(), z.string())
+    // z.object({}).catchall(z.string()) instead of z.record(z.string(), z.string()): both
+    // accept string-keyed/string-valued objects, but z.record() emits `propertyNames`
+    // (JSON Schema Draft-07) which openapi-diff rejects as invalid OpenAPI 3.0.
+    // catchall() emits only `additionalProperties` which is valid in OpenAPI 3.0.
+    .object({})
+    .catchall(z.string())
     .refine((headers) => Object.keys(headers).length <= 50, {
       message: 'At most 50 response headers are allowed',
     })
