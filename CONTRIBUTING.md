@@ -91,7 +91,28 @@ To scope a command to a single workspace, use its path:
 
 ---
 
-### 6. Running the Development Application
+### 6. OpenAPI Schema Compatibility
+
+PRs are automatically checked for **breaking OpenAPI schema changes** against
+`main` (removed paths/schemas/properties, narrowed responses, newly required
+fields, changed types, removed enum values). The
+`OpenAPI Breaking-Change Detection` CI job blocks the merge when one is
+detected.
+
+Run the same check locally before pushing:
+
+```bash
+npm run openapi:check:breaking
+```
+
+If your change intentionally breaks the API contract, bump the OpenAPI
+`info.version` in `apps/api/src/openapi.config.ts`, run `npm run
+generate:types`, commit the regenerated files, and document the migration —
+see [docs/openapi-breaking-changes.md](docs/openapi-breaking-changes.md).
+
+---
+
+### 7. Running the Development Application
 
 Launch the full monorepo stack using Turborepo:
 

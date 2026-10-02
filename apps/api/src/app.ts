@@ -26,6 +26,7 @@ import { deadLettersRoutes } from './modules/dead-letters/dead-letters.routes';
 import { graphqlRoutes } from './modules/graphql/graphql.routes';
 import { exportsRoutes } from './modules/exports/exports.routes';
 import { openApiOptions } from './openapi.config';
+import { loggerOptions } from './lib/logger';
 
 import { checkRedisReadiness, getRedisStatus } from './lib/redis';
 import { dbFailover } from './lib/db-failover';
@@ -37,7 +38,8 @@ export { openApiComponentSchemas, openApiOptions } from './openapi.config';
 export const buildApp = async () => {
   // Issue #19: Correlation IDs — read x-request-id header or generate a UUID
   const app = Fastify({
-    logger: true,
+    logger: loggerOptions,
+    requestIdLogLabel: 'requestId',
     pluginTimeout: 30000,
     requestIdHeader: 'x-request-id',
     genReqId: (req) => {
