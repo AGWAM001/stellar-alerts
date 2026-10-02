@@ -1,6 +1,6 @@
-import { gql } from 'graphql';
-
-export const typeDefs = gql`
+// The Apollo Server accepts either a DocumentNode or a plain string for typeDefs.
+// We use a tagged template for syntax highlighting without importing 'graphql' directly.
+export const typeDefs = `#graphql
   type Payment {
     id: String!
     walletId: String!

@@ -68,6 +68,11 @@ export type AlertRule = Prisma.AlertRuleModel
  */
 export type AlertRuleDispatchLog = Prisma.AlertRuleDispatchLogModel
 /**
+ * Model TelegramSyncCode
+ * 
+ */
+export type TelegramSyncCode = Prisma.TelegramSyncCodeModel
+/**
  * Model WhatsAppDeliveryLog
  * 
  */
