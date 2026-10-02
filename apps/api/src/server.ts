@@ -3,6 +3,7 @@ import { buildApp } from './app';
 import { prisma, connectWithRetry } from './lib/prisma';
 import { startTelemetry, shutdownTelemetry } from './lib/telemetry';
 import { closeRedisConnections } from './lib/redis';
+import { createGrpcServer } from './modules/grpc/grpc.server';
 import { createLogger } from './lib/logger';
 
 const log = createLogger({ module: 'ApiServer' });

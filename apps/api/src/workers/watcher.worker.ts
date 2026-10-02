@@ -529,13 +529,13 @@ export async function startHorizonSSEStream(
     const enqueueMessage = (task: () => Promise<void>): Promise<void> => {
       if (queueLength >= maxQueuedMessages) {
         streamMetrics.backpressureDropped++;
-        console.warn(`[WatcherStream] ⚠️ Backpressure limit reached (${maxQueuedMessages}); dropping message for ${wallet.publicKey.substring(0, 8)}...`);
+        log.warn(`[WatcherStream] ⚠️ Backpressure limit reached (${maxQueuedMessages}); dropping message for ${wallet.publicKey.substring(0, 8)}...`);
         return Promise.resolve();
       }
       queueLength++;
       const run = processingChain
         .then(task)
-        .catch((err) => console.error(`[WatcherStream] Error processing queued message: ${err.message}`))
+        .catch((err) => log.error(`[WatcherStream] Error processing queued message: ${err.message}`))
         .finally(() => {
           queueLength--;
         });
@@ -573,6 +573,7 @@ export async function startHorizonSSEStream(
     const resetHeartbeat = () => {
       if (heartbeatTimeout) clearTimeout(heartbeatTimeout);
       heartbeatTimeout = setTimeout(() => {
+        streamMetrics.heartbeatTimeouts++;
         log.warn(`[WatcherStream] ⚠️ Heartbeat timeout for ${wallet.publicKey.substring(0, 8)}... Reconnecting...`);
         connect();
       }, 60000);
@@ -591,11 +592,18 @@ export async function startHorizonSSEStream(
           onmessage: async (record: any) => {
             resetHeartbeat();
             attempts = 1;
-            log.info(`[WatcherStream] ⚡ Live SSE stream message received: ${record.type}`);
-            await processPaymentRecord(wallet, record, { previousPagingToken: lastPagingToken });
-            if (record.paging_token) {
-              lastPagingToken = record.paging_token;
-            }
+            await enqueueMessage(async () => {
+              log.info(`[WatcherStream] ⚡ Live SSE stream message received: ${record.type}`);
+              // processPaymentRecord already persists the cursor internally
+              // (with gap detection, when given previousPagingToken) - a
+              // second saveCursor() call here would be redundant and would
+              // skip gap detection by omitting previousPagingToken.
+              await processPaymentRecord(wallet, record, { previousPagingToken: lastPagingToken });
+              if (record.paging_token) {
+                lastPagingToken = record.paging_token;
+              }
+              streamMetrics.messagesProcessed++;
+            });
           },
           onerror: (error: any) => {
             log.error({ err: error instanceof Error ? error.message : String(error), publicKeyPrefix: wallet.publicKey.substring(0, 8) }, 'SSE stream error');
