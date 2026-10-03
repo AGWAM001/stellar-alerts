@@ -77,7 +77,7 @@ stellar-alerts/
 │       └── src/
 │           ├── app/              # Next.js routes (/page.tsx, /verify)
 │           └── components/
-│               └── dashboard/    # SummaryStats, WalletList, PaymentTable, NotificationModal
+│               └── dashboard/    # SummaryStats, WalletList, PaymentTable, NotificationModal, SankeyFlowDiagram
 ├── contracts/
 │   └── alert_registry/           # Soroban Rust Wasm Smart Contract
 │       ├── Cargo.toml
