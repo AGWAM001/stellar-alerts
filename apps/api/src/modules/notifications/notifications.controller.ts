@@ -19,7 +19,7 @@ export class NotificationsController {
       throw new AuthenticationError('User not authenticated');
     }
 
-    const body = request.body as any;
+    const body = (request.body as any) || {};
     const { mfaToken, ...preferences } = body;
 
     try {
@@ -79,7 +79,7 @@ export class NotificationsController {
       throw new AuthenticationError('User not authenticated');
     }
 
-    const body = request.body as any;
+    const body = (request.body as any) || {};
     const { mfaToken, ...preferences } = body;
 
     await notificationsService.updatePreferences(
