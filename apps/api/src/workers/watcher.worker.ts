@@ -13,7 +13,7 @@ import {
 } from '../lib/soroban';
 import { withWalletLock } from '../lib/lock';
 import { shouldAlert, PaymentContext } from '../lib/rules-engine';
-import { evaluateAndDispatch, AlertRuleRecord, NormalizedPaymentEvent } from '../lib/alert-rule-evaluator';
+import { evaluateAlertRules, evaluateAndDispatch, AlertRuleRecord, NormalizedPaymentEvent } from '../lib/alert-rule-evaluator';
 import { MemoryMonitor, MemorySnapshot } from '../utils/memory-monitor';
 import { appendPaymentChecksum } from '../services/checksumChain.service';
 import { createLogger } from '../lib/logger';
@@ -106,20 +106,92 @@ export async function processPaymentRecord(
       const existing = await prisma.payment.findUnique({ where: { txHash } });
       let payment: { id: string } | null = existing;
       let isNewPayment = false;
+      let shouldSendAlert = true;
+      let alertRules: AlertRuleRecord[] = [];
+
+      if (!existing && wallet.userId) {
+        alertRules = await prisma.alertRule.findMany({
+          where: { userId: wallet.userId },
+        }) as unknown as AlertRuleRecord[];
+
+        if (alertRules.length > 0) {
+          const event: NormalizedPaymentEvent = {
+            paymentId: '',
+            txHash,
+            walletId: wallet.id,
+            userId: wallet.userId,
+            amount: Number(amount),
+            asset,
+            assetIssuer,
+            fromAddress,
+            memo,
+            receivedAt: receivedAt.toISOString(),
+          };
+
+          shouldSendAlert = evaluateAlertRules(alertRules, event).length > 0;
+        } else {
+          const notifyPrefs = await prisma.notificationPreference.findUnique({
+            where: { userId: wallet.userId },
+          });
+
+          if ((notifyPrefs as any)?.filterRules) {
+            const paymentContext: PaymentContext = {
+              amount: Number(amount),
+              asset,
+              fromAddress,
+              memo,
+            };
+
+            shouldSendAlert = shouldAlert((notifyPrefs as any)?.filterRules, paymentContext);
+
+            if (!shouldSendAlert) {
+              console.log(
+                `[WatcherWorker] 🔕 Payment filtered by rules for wallet (${wallet.publicKey.substring(
+                  0,
+                  8
+                )}...): ${amount} ${asset}`
+              );
+            }
+          }
+        }
+      }
 
       if (!existing) {
         try {
-          payment = await prisma.payment.create({
-            data: {
-              walletId: wallet.id,
+          payment = await prisma.$transaction(async (tx) => {
+            const createdPayment = await tx.payment.create({
+              data: {
+                walletId: wallet.id,
+                txHash,
+                fromAddress,
+                amount: Number(amount),
+                asset,
+                assetIssuer,
+                memo,
+                receivedAt,
+              },
+            });
+
+            const eventPayload = {
+              paymentId: createdPayment.id,
               txHash,
-              fromAddress,
-              amount: Number(amount),
+              walletId: wallet.id,
+              amount,
               asset,
               assetIssuer,
-              memo,
-              receivedAt,
-            },
+              fromAddress,
+              receivedAt: receivedAt.toISOString(),
+            };
+            await tx.outboxEvent.createMany({
+              data: [
+                ...(shouldSendAlert
+                  ? [{ eventType: 'payment.alert', aggregateId: createdPayment.id, payload: eventPayload }]
+                  : []),
+                { eventType: 'payment.realtime', aggregateId: createdPayment.id, payload: eventPayload },
+              ],
+            });
+
+            return createdPayment;
           });
           isNewPayment = true;
         } catch (err: any) {
@@ -176,10 +248,6 @@ export async function processPaymentRecord(
         let usedAlertRules = false;
 
         if (wallet.userId) {
-          const alertRules = await prisma.alertRule.findMany({
-            where: { userId: wallet.userId },
-          });
-
           if (alertRules.length > 0) {
             usedAlertRules = true;
             const event: NormalizedPaymentEvent = {
