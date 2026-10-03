@@ -15,6 +15,10 @@ const envSchema = z.object({
   MASTER_ENCRYPTION_KEY: z.string().min(32).describe('Master key for encrypting webhook secrets (AES-256-GCM)'),
   MASTER_ENCRYPTION_KEY_VERSION: z.string().optional().default("1"),
   MASTER_ENCRYPTION_OLD_KEYS: z.string().optional().default("{}"),
+  // Discord application public key used to verify interaction webhooks
+  // (acknowledge / snooze / re-route buttons on alert messages). Unset disables
+  // the /integrations/discord/interactions route.
+  DISCORD_PUBLIC_KEY: z.string().optional(),
   // Requests/minute allowed per client before @fastify/rate-limit responds 429.
   // Overridable so load-test runs (k6, etc.) can measure real server capacity
   // instead of hitting the rate limiter almost immediately.
