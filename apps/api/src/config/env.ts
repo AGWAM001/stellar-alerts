@@ -13,10 +13,15 @@ const envSchema = z.object({
   MASTER_ENCRYPTION_KEY: z.string().min(32).describe('Master key for encrypting webhook secrets (AES-256-GCM)'),
   MASTER_ENCRYPTION_KEY_VERSION: z.string().optional().default("1"),
   MASTER_ENCRYPTION_OLD_KEYS: z.string().optional().default("{}"),
+  // Discord application public key used to verify interaction webhooks
+  // (acknowledge / snooze / re-route buttons on alert messages). Unset disables
+  // the /integrations/discord/interactions route.
+  DISCORD_PUBLIC_KEY: z.string().optional(),
   // Requests/minute allowed per client before @fastify/rate-limit responds 429.
   // Overridable so load-test runs (k6, etc.) can measure real server capacity
   // instead of hitting the rate limiter almost immediately.
   RATE_LIMIT_MAX: z.coerce.number().int().positive().optional().default(100),
+  WORKER_MAX_ATTEMPTS: z.coerce.number().int().positive().max(20).optional().default(5),
   SOROBAN_RENT_WORKER_ENABLED: z.string().optional().default("true"),
   SOROBAN_RENT_WORKER_INTERVAL_MS: z.string().optional().default("60000"),
   SOROBAN_RENT_WORKER_SECRET: z.string().optional(),
@@ -179,7 +184,11 @@ const parseEnv = (): Env => {
       REDIS_SENTINEL_MASTER_NAME: "mymaster",
       REDIS_SENTINEL_PASSWORD: undefined,
       PORT: "3001",
+      MASTER_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef",
+      MASTER_ENCRYPTION_KEY_VERSION: "1",
+      MASTER_ENCRYPTION_OLD_KEYS: "{}",
       RATE_LIMIT_MAX: 100,
+      WORKER_MAX_ATTEMPTS: 5,
       SOROBAN_RENT_WORKER_ENABLED: "true",
       SOROBAN_RENT_WORKER_INTERVAL_MS: "60000",
       SOROBAN_RENT_WORKER_SECRET: undefined,
@@ -193,6 +202,11 @@ const parseEnv = (): Env => {
       SOROBAN_INDEXER_BENCHMARK_INTERVAL_MS: "3600000",
       SOROBAN_INDEXER_BENCHMARK_DATA_ROWS: "10000",
       SOROBAN_STAKING_REWARD_WORKER_ENABLED: "true",
+      SOROBAN_SAC_WORKER_ENABLED: "true",
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4318/v1/traces",
+      OTEL_SERVICE_NAME: "stellar-alerts-api",
+      WASM_ANALYZER_MAX_UPLOAD_BYTES: 5 * 1024 * 1024,
+      WASM_ANALYZER_TIMEOUT_MS: 5000,
       ...EXPORT_DEFAULTS,
     } as unknown as Env;
   }
@@ -207,6 +221,7 @@ const parseEnv = (): Env => {
     REDIS_SENTINEL_PASSWORD: undefined,
     PORT: "3001",
     RATE_LIMIT_MAX: 100,
+    WORKER_MAX_ATTEMPTS: 5,
     SOROBAN_RENT_WORKER_ENABLED: "true",
     SOROBAN_RENT_WORKER_INTERVAL_MS: "60000",
     SOROBAN_RENT_WORKER_SECRET: undefined,

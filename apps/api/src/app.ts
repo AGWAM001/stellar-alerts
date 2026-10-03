@@ -11,13 +11,19 @@ import { authRoutes } from './modules/auth/auth.routes';
 import { walletsRoutes } from './modules/wallets/wallets.routes';
 import { paymentsRoutes } from './modules/payments/payments.routes';
 import { webhooksRoutes } from './modules/webhooks/webhooks.routes';
+import { accountRoutes } from './modules/account/account.routes';
+import { registerSecurityHeaders } from './middleware/security.middleware';
+import { registerCorrelation } from './middleware/correlation.middleware';
+import { registerIdempotency } from './middleware/idempotency.middleware';
 import { sorobanStateRoutes } from './modules/soroban-state/soroban-state.routes';
 import { notificationsRoutes } from './modules/notifications/notifications.routes';
 import { alertRulesRoutes } from './modules/alert-rules/alert-rules.routes';
 import { deadLettersRoutes } from './modules/dead-letters/dead-letters.routes';
+import { discordInteractionsRoutes } from './modules/discord-interactions';
 import { graphqlRoutes } from './modules/graphql/graphql.routes';
 import { exportsRoutes } from './modules/exports/exports.routes';
 import { openApiOptions } from './openapi.config';
+import { loggerOptions } from './lib/logger';
 
 import { checkRedisReadiness, getRedisStatus } from './lib/redis';
 import { dbFailover } from './lib/db-failover';
@@ -28,7 +34,8 @@ export { openApiComponentSchemas, openApiOptions } from './openapi.config';
 
 export const buildApp = async () => {
   const app = Fastify({
-    logger: true,
+    logger: loggerOptions,
+    requestIdLogLabel: 'requestId',
     pluginTimeout: 30000,
     /**
      * Correlation ID strategy:
@@ -36,7 +43,7 @@ export const buildApp = async () => {
      *  2. Otherwise generate a fresh UUID v4 via the Node built-in crypto module.
      *
      * Fastify automatically binds the resolved ID to `request.id` and injects
-     * it into every Pino log line produced via `request.log.*` as the `reqId`
+     * it into every Pino log line produced via `request.log.*` as the `requestId`
      * field, giving full per-request traceability at zero extra cost.
      */
     requestIdHeader: 'x-request-id',
@@ -55,9 +62,13 @@ export const buildApp = async () => {
    * that clients and API gateways can cross-reference server-side log entries.
    */
   app.addHook('onRequest', async (request, reply) => {
-    void reply.header('x-request-id', request.id);
+    void reply.header('x-request-id', request.requestId || request.id);
   });
 
+  // ── Security & observability hooks (registered before routes) ────────────
+  await registerSecurityHeaders(app);
+  await registerCorrelation(app);
+  await registerIdempotency(app);
   /**
    * Central error envelope: every thrown AppError (see lib/errors.ts) and
    * any other unhandled error is serialized into one consistent shape —
@@ -80,7 +91,7 @@ export const buildApp = async () => {
           code: error.code,
           message: error.message,
           ...(error.details !== undefined ? { details: error.details } : {}),
-          requestId: request.id,
+          requestId: request.requestId || request.id,
         },
       });
     }
@@ -94,7 +105,25 @@ export const buildApp = async () => {
           code: 'VALIDATION_ERROR',
           message: 'Request validation failed',
           details: (error as any).validation,
-          requestId: request.id,
+          requestId: request.requestId || request.id,
+        },
+      });
+    }
+
+    // Malformed JSON bodies (and other 4xx HTTP-level parse errors) thrown by
+    // Fastify itself before any handler runs — the client sent bad input, so a
+    // 500 would be misleading. The generic message stays safe for clients.
+    const err = error as any;
+    if (err.statusCode !== undefined && err.statusCode >= 400 && err.statusCode < 500) {
+      request.log.warn({ err: error }, 'Bad request rejected');
+      return reply.status(err.statusCode).send({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: err.code === 'FST_ERR_CTP_INVALID_JSON_PARSE_ERROR'
+            ? 'Malformed JSON in request body'
+            : 'Bad request',
+          ...(Array.isArray(err.errors) ? { details: err.errors } : {}),
+          requestId: request.requestId || request.id,
         },
       });
     }
@@ -104,14 +133,13 @@ export const buildApp = async () => {
       error: {
         code: 'INTERNAL_ERROR',
         message: 'An unexpected error occurred',
-        requestId: request.id,
+        requestId: request.requestId || request.id,
       },
     });
   });
 
   await app.register(cors, {
     origin: true // Allow all origins for dev, or specify 'http://localhost:3000'
-
   });
 
   await app.register(rateLimit, {
@@ -160,11 +188,13 @@ export const buildApp = async () => {
   app.register(walletsRoutes);
   app.register(paymentsRoutes);
   app.register(webhooksRoutes);
+  app.register(accountRoutes);
   app.register(notificationsRoutes);
   app.register(alertRulesRoutes);
   app.register(deadLettersRoutes);
-  await app.register(graphqlRoutes);
+await app.register(graphqlRoutes);
   app.register(exportsRoutes);
+  app.register(discordInteractionsRoutes);
 
   return app;
 };
