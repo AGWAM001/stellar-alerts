@@ -18,6 +18,8 @@ import { MemoryMonitor, MemorySnapshot } from '../utils/memory-monitor';
 import { appendPaymentChecksum } from '../services/checksumChain.service';
 import { createLogger } from '../lib/logger';
 import { WorkerLifecycleManager } from '../lib/worker-lifecycle';
+import { startTelemetry, shutdownTelemetry } from '../lib/telemetry';
+import { startWorkerMetricsServer, stopWorkerMetricsServer } from '../lib/worker-metrics-server';
 import { trace, SpanStatusCode, TraceFlags } from '@opentelemetry/api';
 
 export const watcherLifecycle = new WorkerLifecycleManager({
@@ -728,6 +730,19 @@ export async function pollOnce() {
 
 export async function runWatcher() {
   console.log("[WatcherWorker] 🚀 Starting Stellar Testnet Watcher Worker...");
+
+  // Without an SDK registered the OpenTelemetry API is a no-op, so webhook
+  // dispatch spans would be silently dropped instead of reaching Jaeger.
+  await startTelemetry(env.OTEL_WORKER_SERVICE_NAME);
+  watcherLifecycle.registerCleanup('telemetry', async () => {
+    await shutdownTelemetry();
+  });
+
+  // Opt-in scrape endpoint; unset by default so no listener is opened.
+  await startWorkerMetricsServer(env.WORKER_METRICS_PORT);
+  watcherLifecycle.registerCleanup('metricsServer', async () => {
+    await stopWorkerMetricsServer();
+  });
 
   startMemoryMonitor();
 
