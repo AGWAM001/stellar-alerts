@@ -1,28 +1,37 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('../../lib/prisma', () => ({
-  prisma: {
-    payment: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-    },
-    ingestionCursor: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      upsert: vi.fn(),
-    },
-    notificationPreference: {
-      findUnique: vi.fn().mockResolvedValue(null),
-    },
-    alertRule: {
-      findMany: vi.fn().mockResolvedValue([]),
-    },
-    alertRuleDispatchLog: {
-      findUnique: vi.fn().mockResolvedValue(null),
-      create: vi.fn().mockResolvedValue({}),
-    },
-  },
+  prisma: (() => {
+    const paymentCreate = vi.fn();
+    const transaction = {
+      payment: { create: paymentCreate },
+      outboxEvent: { createMany: vi.fn() },
+    };
+
+    return {
+      payment: {
+        findUnique: vi.fn(),
+        create: paymentCreate,
+      },
+      ingestionCursor: {
+        findUnique: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        upsert: vi.fn(),
+      },
+      notificationPreference: {
+        findUnique: vi.fn().mockResolvedValue(null),
+      },
+      alertRule: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+      alertRuleDispatchLog: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue({}),
+      },
+      $transaction: vi.fn((callback: (tx: typeof transaction) => unknown) => callback(transaction)),
+    };
+  })(),
 }));
 
 vi.mock('../../lib/stellar', () => ({

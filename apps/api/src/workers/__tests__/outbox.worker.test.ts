@@ -22,7 +22,9 @@ import { relayOutboxBatch } from '../outbox.worker';
 describe('outbox relay', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    outboxEvent.updateMany.mockResolvedValue({ count: 0 });
+    outboxEvent.updateMany.mockImplementation(async (args: { where: { status: string } }) => ({
+      count: args.where.status === 'pending' ? 1 : 0,
+    }));
     outboxEvent.update.mockResolvedValue({});
     enqueuePaymentAlert.mockResolvedValue({ id: 'job-1' });
     publish.mockResolvedValue(1);
