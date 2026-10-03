@@ -543,9 +543,7 @@ try {
 
   alertWorker = new Worker<AlertJobData>(
     'payment-alerts',
-    async (job) => {
-      return processAlertDispatch(job.data);
-    },
+    paymentAlertWorkerProcessor,
     { connection, concurrency: env.ALERT_WORKER_CONCURRENCY },
   );
 
