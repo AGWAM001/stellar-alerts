@@ -20,6 +20,7 @@ import { emailService } from '../services/email.service';
 import { dispatchDiscordAlert } from '../utils/discord';
 import { dispatchSlackAlert, isValidSlackWebhookUrl } from '../utils/slack';
 import { dispatchPushNotification, PushNotificationData } from '../utils/push-protocol';
+import { classifyWorkerError, getWorkerMaxAttempts, PermanentWorkerError } from './worker-retry-policy';
 
 function decryptWebhookSecret(webhook: {
   keyVersion: number;
@@ -458,7 +459,27 @@ export async function dispatchWebhookAndLog(webhookId: string, payload: any, ret
   }
 }
 
-export const paymentAlertWorkerProcessor = async (job: { data: AlertJobData }) => processAlertDispatch(job.data);
+function validateAlertJobData(data: AlertJobData): void {
+  if (!data || typeof data !== 'object' || typeof data.paymentId !== 'string' || data.paymentId.length === 0) {
+    throw new PermanentWorkerError('Alert job is missing paymentId', 'missing_payment_id');
+  }
+  if (typeof data.txHash !== 'string' || data.txHash.length === 0) {
+    throw new PermanentWorkerError('Alert job is missing txHash', 'missing_tx_hash');
+  }
+}
+
+export const paymentAlertWorkerProcessor = async (job: { data: AlertJobData }) => {
+  try {
+    validateAlertJobData(job.data);
+    return await processAlertDispatch(job.data);
+  } catch (error) {
+    const classification = classifyWorkerError(error);
+    if (classification.classification === 'permanent' && !(error instanceof PermanentWorkerError)) {
+      throw new PermanentWorkerError(classification.message, classification.reason);
+    }
+    throw error;
+  }
+};
 
 export function createRedisConnectionConfig() {
   const sentinelsRaw = process.env.REDIS_SENTINELS;
@@ -507,7 +528,7 @@ try {
   alertQueue = new Queue<AlertJobData>("payment-alerts", {
     connection,
     defaultJobOptions: {
-      attempts: 5,
+      attempts: getWorkerMaxAttempts(),
       backoff: {
         type: "exponential",
         delay: 2000,
@@ -536,27 +557,7 @@ try {
   });
 
   alertQueueEvents.on("failed", async ({ jobId, failedReason }) => {
-    if (!jobId || !alertQueue || !dlqQueue) return;
-    try {
-      const job = await Job.fromId(alertQueue, jobId);
-      if (job && job.attemptsMade >= (job.opts.attempts || 5)) {
-        await dlqQueue.add("dispatch-alert-failed", job.data, {
-          jobId: `dlq-${jobId}`,
-        });
-        // Persist a dead-letter so operators can inspect/replay/suppress this
-        // terminal failure even after the BullMQ queue is cleaned up (#273).
-        void persistDeadLetter({
-          channel: "queue",
-          destination: jobId,
-          paymentId: job.data?.paymentId ?? null,
-          payload: job.data ?? null,
-          error: failedReason || "Alert delivery job reached max attempts",
-        });
-        queueLog.warn({ jobId, failedReason }, 'Moved failed job to DLQ');
-      }
-    } catch (e: any) {
-      queueLog.warn({ jobId, err: e.message }, 'Could not route job to DLQ');
-    }
+    await failedJobHandler({ jobId, failedReason });
   });
 
   queueLog.info({ host: redisHost, port: redisPort }, '📡 BullMQ payment-alerts queue initialized');
@@ -568,16 +569,34 @@ export async function failedJobHandler({ jobId, failedReason }: { jobId?: string
   if (!jobId || !alertQueue || !dlqQueue) return;
   try {
     const job = await Job.fromId(alertQueue, jobId);
-    if (job && job.attemptsMade >= (job.opts.attempts || 5)) {
+    if (!job) return;
+
+    const classification = classifyWorkerError(failedReason || 'Alert delivery job failed');
+    const maxAttempts = job.opts.attempts || getWorkerMaxAttempts();
+    const reachedAttemptCap = job.attemptsMade >= maxAttempts;
+
+    if (classification.classification === 'permanent' || reachedAttemptCap) {
       await dlqQueue.add("dispatch-alert-failed", job.data, {
         jobId: `dlq-${jobId}`,
       });
+      const wallet = job.data?.walletId
+        ? await prisma.wallet.findUnique({ where: { id: job.data.walletId }, select: { userId: true } })
+        : null;
       await persistDeadLetter({
         channel: "queue",
         destination: jobId,
+        deliveryKey: `queue:${jobId}`,
         paymentId: (job.data as AlertJobData | undefined)?.paymentId ?? null,
+        userId: wallet?.userId ?? null,
         payload: job.data ?? null,
-        error: failedReason || "Alert delivery job reached max attempts",
+        error: classification.message || "Alert delivery job reached max attempts",
+        failureClass: classification.classification,
+        failureReason: reachedAttemptCap && classification.classification === 'retryable'
+          ? 'max_attempts_exceeded'
+          : classification.reason,
+        jobId,
+        attemptsMade: job.attemptsMade,
+        maxAttempts,
       });
       queueLog.info(
         `[Queue] 📨 Moved failed job ${jobId} to DLQ. Reason: ${failedReason}`,
