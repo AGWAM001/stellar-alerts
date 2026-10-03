@@ -13,7 +13,7 @@ import { createLogger } from './logger';
 import { publishDeliveryEvent } from './realtime';
 import { deliverWithIdempotency } from './delivery';
 import { persistDeadLetter } from './dead-letter';
-import { validateUrlForSsrf } from '../utils/ssrf';
+import { ssrfSafeFetch, validateUrlForSsrf } from '../utils/ssrf';
 import { decryptPersonalField } from '../utils/privacy';
 import { dispatchWhatsAppAlert } from '../utils/whatsapp';
 import { emailService } from '../services/email.service';
@@ -171,17 +171,14 @@ async function getOrCreateCircuitBreaker(
 
   const breaker: CircuitBreaker<any> = new CircuitBreaker(
     async (url: string, payload: string, headers: Record<string, string>) => {
-      const response = await fetchWithTimeout(
-        url,
-        {
-          method: "POST",
-          headers,
-          body: payload,
-        },
-        env.WEBHOOK_TIMEOUT_MS,
-        undefined,
-        'Webhook',
-      );
+      const response = await ssrfSafeFetch(url, {
+        method: 'POST',
+        headers,
+        body: payload,
+        maxRequestBytes: 1024 * 1024,
+        maxResponseBytes: 64 * 1024,
+        signal: AbortSignal.timeout(env.WEBHOOK_TIMEOUT_MS),
+      });
 
       if (response.status === 429) {
         const error = new Error(`Rate limited: ${response.status}`) as Error & {
