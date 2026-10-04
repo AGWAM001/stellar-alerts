@@ -67,6 +67,7 @@ export const ModelName = {
   WebhookLog: 'WebhookLog',
   WebhookCircuitBreaker: 'WebhookCircuitBreaker',
   ExportJob: 'ExportJob',
+  TransactionSimulation: 'TransactionSimulation',
   SorobanEventSnapshot: 'SorobanEventSnapshot',
   SorobanStateAudit: 'SorobanStateAudit',
   SorobanContractSubscription: 'SorobanContractSubscription',
@@ -351,6 +352,24 @@ export const ExportJobScalarFieldEnum = {
 export type ExportJobScalarFieldEnum = (typeof ExportJobScalarFieldEnum)[keyof typeof ExportJobScalarFieldEnum]
 
 
+export const TransactionSimulationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  sourceAccount: 'sourceAccount',
+  network: 'network',
+  label: 'label',
+  envelopeHash: 'envelopeHash',
+  score: 'score',
+  band: 'band',
+  blockExecution: 'blockExecution',
+  indicatorCodes: 'indicatorCodes',
+  report: 'report',
+  createdAt: 'createdAt'
+} as const
+
+export type TransactionSimulationScalarFieldEnum = (typeof TransactionSimulationScalarFieldEnum)[keyof typeof TransactionSimulationScalarFieldEnum]
+
+
 export const SorobanEventSnapshotScalarFieldEnum = {
   id: 'id',
   contractId: 'contractId',
@@ -595,6 +614,12 @@ export const DeadLetterScalarFieldEnum = {
   payload: 'payload',
   error: 'error',
   status: 'status',
+  failureClass: 'failureClass',
+  failureReason: 'failureReason',
+  jobId: 'jobId',
+  attemptsMade: 'attemptsMade',
+  maxAttempts: 'maxAttempts',
+  quarantinedAt: 'quarantinedAt',
   retryCount: 'retryCount',
   failedAt: 'failedAt',
   createdAt: 'createdAt',
