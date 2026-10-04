@@ -13,11 +13,13 @@ import {
 } from '../lib/soroban';
 import { withWalletLock } from '../lib/lock';
 import { shouldAlert, PaymentContext } from '../lib/rules-engine';
-import { evaluateAndDispatch, AlertRuleRecord, NormalizedPaymentEvent } from '../lib/alert-rule-evaluator';
+import { evaluateAlertRules, evaluateAndDispatch, AlertRuleRecord, NormalizedPaymentEvent } from '../lib/alert-rule-evaluator';
 import { MemoryMonitor, MemorySnapshot } from '../utils/memory-monitor';
 import { appendPaymentChecksum } from '../services/checksumChain.service';
 import { createLogger } from '../lib/logger';
 import { WorkerLifecycleManager } from '../lib/worker-lifecycle';
+import { startTelemetry, shutdownTelemetry } from '../lib/telemetry';
+import { startWorkerMetricsServer, stopWorkerMetricsServer } from '../lib/worker-metrics-server';
 import { trace, SpanStatusCode, TraceFlags } from '@opentelemetry/api';
 
 export const watcherLifecycle = new WorkerLifecycleManager({
@@ -113,34 +115,105 @@ export async function processPaymentRecord(
       span.setAttribute('payment.walletId', wallet.id);
       span.setAttribute('payment.asset', asset);
 
-      const pagingToken = getHorizonPagingToken(record);
-      // Keep the durable dedupe decision and cursor movement atomic. If this
-      // transaction fails, the upstream cursor stays put and replay is safe.
-      // The existing txHash uniqueness constraint keeps mixed-version rollouts compatible.
-      const { payment, isNewPayment, gap } = await prisma.$transaction(async (tx) => {
-        const inserted = await tx.payment.createMany({
-          data: [{
-            walletId: wallet.id,
+      const existing = await prisma.payment.findUnique({ where: { txHash } });
+      let payment: { id: string } | null = existing;
+      let isNewPayment = false;
+      let shouldSendAlert = true;
+      let alertRules: AlertRuleRecord[] = [];
+
+      if (!existing && wallet.userId) {
+        alertRules = await prisma.alertRule.findMany({
+          where: { userId: wallet.userId },
+        }) as unknown as AlertRuleRecord[];
+
+        if (alertRules.length > 0) {
+          const event: NormalizedPaymentEvent = {
+            paymentId: '',
             txHash,
-            fromAddress,
+            walletId: wallet.id,
+            userId: wallet.userId,
             amount: Number(amount),
             asset,
             assetIssuer,
+            fromAddress,
             memo,
-            receivedAt,
-          }],
-          skipDuplicates: true,
-        });
-        const persistedPayment = await tx.payment.findUnique({ where: { txHash } });
+            receivedAt: receivedAt.toISOString(),
+          };
 
-        let cursorGap = { hasGap: false, ledgerDelta: 0 };
-        if (pagingToken) {
-          if (options.skipGapCheck) {
-            await tx.ingestionCursor.upsert({
-              where: { walletId: wallet.id },
-              create: { walletId: wallet.id, pagingToken },
-              update: { pagingToken, ...buildCursorSuccessUpdate() },
+          shouldSendAlert = evaluateAlertRules(alertRules, event).length > 0;
+        } else {
+          const notifyPrefs = await prisma.notificationPreference.findUnique({
+            where: { userId: wallet.userId },
+          });
+
+          if ((notifyPrefs as any)?.filterRules) {
+            const paymentContext: PaymentContext = {
+              amount: Number(amount),
+              asset,
+              fromAddress,
+              memo,
+            };
+
+            shouldSendAlert = shouldAlert((notifyPrefs as any)?.filterRules, paymentContext);
+
+            if (!shouldSendAlert) {
+              console.log(
+                `[WatcherWorker] 🔕 Payment filtered by rules for wallet (${wallet.publicKey.substring(
+                  0,
+                  8
+                )}...): ${amount} ${asset}`
+              );
+            }
+          }
+        }
+      }
+
+      if (!existing) {
+        try {
+          payment = await prisma.$transaction(async (tx) => {
+            const createdPayment = await tx.payment.create({
+              data: {
+                walletId: wallet.id,
+                txHash,
+                fromAddress,
+                amount: Number(amount),
+                asset,
+                assetIssuer,
+                memo,
+                receivedAt,
+              },
             });
+
+            const eventPayload = {
+              paymentId: createdPayment.id,
+              txHash,
+              walletId: wallet.id,
+              amount,
+              asset,
+              assetIssuer,
+              fromAddress,
+              receivedAt: receivedAt.toISOString(),
+            };
+            await tx.outboxEvent.createMany({
+              data: [
+                ...(shouldSendAlert
+                  ? [{ eventType: 'payment.alert', aggregateId: createdPayment.id, payload: eventPayload }]
+                  : []),
+                { eventType: 'payment.realtime', aggregateId: createdPayment.id, payload: eventPayload },
+              ],
+            });
+
+            return createdPayment;
+          });
+          isNewPayment = true;
+        } catch (err: any) {
+          if (err.code === 'P2002') {
+            // A concurrent processor (SSE stream + poll loop, or two
+            // overlapping bounded-backfill passes) inserted this payment
+            // first — reorg-like duplicate delivery, not a real error.
+            // Treat it as already recorded: don't re-alert.
+            log.info({ txHash }, '🔁 Duplicate payment insert raced and lost, skipping (already recorded)');
+            payment = await prisma.payment.findUnique({ where: { txHash } });
           } else {
             const previousPagingToken =
               options.previousPagingToken !== undefined
@@ -212,10 +285,6 @@ export async function processPaymentRecord(
         let usedAlertRules = false;
 
         if (wallet.userId) {
-          const alertRules = await prisma.alertRule.findMany({
-            where: { userId: wallet.userId },
-          });
-
           if (alertRules.length > 0) {
             usedAlertRules = true;
             const event: NormalizedPaymentEvent = {
@@ -758,6 +827,19 @@ export async function pollOnce() {
 
 export async function runWatcher() {
   log.info("[WatcherWorker] 🚀 Starting Stellar Testnet Watcher Worker...");
+
+  // Without an SDK registered the OpenTelemetry API is a no-op, so webhook
+  // dispatch spans would be silently dropped instead of reaching Jaeger.
+  await startTelemetry(env.OTEL_WORKER_SERVICE_NAME);
+  watcherLifecycle.registerCleanup('telemetry', async () => {
+    await shutdownTelemetry();
+  });
+
+  // Opt-in scrape endpoint; unset by default so no listener is opened.
+  await startWorkerMetricsServer(env.WORKER_METRICS_PORT);
+  watcherLifecycle.registerCleanup('metricsServer', async () => {
+    await stopWorkerMetricsServer();
+  });
 
   startMemoryMonitor();
 
