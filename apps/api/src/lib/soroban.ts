@@ -209,6 +209,9 @@ export interface SorobanFeeEstimate {
 // Helpers
 // ---------------------------------------------------------------------------
 
+/** Stroops per XLM */
+const STROOPS_PER_XLM = 10_000_000;
+
 /**
  * Converts a stroops string or number to XLM with 7 decimal places.
  */

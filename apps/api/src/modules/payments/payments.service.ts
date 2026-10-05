@@ -2,6 +2,7 @@ import { prisma, prismaRead } from '../../lib/prisma';
 import { isSupportedFiatCurrency, convertUsdToFiat, SupportedFiatCurrency } from '../../lib/exchange-rates';
 import { addDifferentialPrivacyNoise } from '../../utils/differential-privacy';
 import { withSummaryCache } from '../../lib/summaryCache';
+import { simulateTransaction, SorobanFeeEstimate } from '../../lib/soroban';
 
 export type PaymentSortField = 'receivedAt' | 'amount' | 'asset';
 export type SortOrder = 'asc' | 'desc';
@@ -274,6 +275,19 @@ export class PaymentsService {
     };
 
     return { summary, daily };
+  }
+
+  /**
+   * Estimates Soroban transaction fees including storage rent and read/write
+   * ledger footprints by delegating to the Soroban RPC `simulateTransaction`
+   * method.
+   *
+   * @param xdrEnvelope - Base64-encoded XDR TransactionEnvelope to simulate.
+   * @returns A {@link SorobanFeeEstimate} with full fee breakdown and footprint.
+   */
+  async estimateFee(xdrEnvelope: string): Promise<SorobanFeeEstimate> {
+    console.log('[PaymentsService] Estimating Soroban transaction fee via RPC simulation');
+    return simulateTransaction(xdrEnvelope);
   }
 }
 
