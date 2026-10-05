@@ -88,7 +88,7 @@ export class WsAuthManager {
     // Node keeps the process alive while timers are pending. `unref()` makes
     // these timers non-blocking so they don't prevent graceful shutdown.
     managed.warnTimer?.unref();
-    managed.expireTimer.unref();
+    managed.expireTimer?.unref();
 
     this.entries.set(entry, managed);
   }
