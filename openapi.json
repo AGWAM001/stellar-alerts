@@ -179,96 +179,58 @@
       "SandboxReplayIdParams": {
         "type": "object",
         "properties": {
-          "replayId": {
+          "id": {
             "type": "string",
             "minLength": 1
           }
         },
         "required": [
-          "replayId"
+          "id"
         ],
         "additionalProperties": false
       },
       "SandboxReplayInput": {
         "type": "object",
         "properties": {
-          "mockResponse": {
-            "default": {
-              "status": 200,
-              "headers": {},
-              "body": "",
-              "delayMs": 0
-            },
+          "mockStatusCode": {
+            "default": 200,
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 599
+          },
+          "mockResponseBody": {
+            "type": "string"
+          },
+          "mockResponseHeaders": {
             "type": "object",
-            "properties": {
-              "status": {
-                "default": 200,
-                "type": "integer",
-                "minimum": 100,
-                "maximum": 599
-              },
-              "headers": {
-                "default": {},
-                "type": "object",
-                "propertyNames": {
-                  "type": "string"
-                },
-                "additionalProperties": {
-                  "type": "string"
-                }
-              },
-              "body": {
-                "default": "",
-                "type": "string",
-                "maxLength": 65536
-              },
-              "delayMs": {
-                "default": 0,
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 5000
-              }
+            "propertyNames": {
+              "type": "string"
             },
-            "required": [
-              "status",
-              "headers",
-              "body",
-              "delayMs"
-            ],
-            "additionalProperties": false
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         },
         "required": [
-          "mockResponse"
+          "mockStatusCode"
         ],
         "additionalProperties": false
       },
       "ListSandboxReplaysQuery": {
         "type": "object",
         "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "completed",
-              "failed"
-            ]
-          },
-          "page": {
-            "default": 1,
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 10000
-          },
-          "pageSize": {
+          "limit": {
             "default": 20,
             "type": "integer",
             "minimum": 1,
             "maximum": 100
+          },
+          "cursor": {
+            "type": "string"
           }
         },
         "required": [
-          "page",
-          "pageSize"
+          "limit"
         ],
         "additionalProperties": false
       },

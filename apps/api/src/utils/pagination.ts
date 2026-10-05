@@ -145,7 +145,7 @@ export function buildCursorWhere(cursor: string): object {
 export const CURSOR_ORDER_BY = [
   { createdAt: 'desc' as const },
   { id: 'desc' as const },
-] as const;
+];
 
 // ---------------------------------------------------------------------------
 // Response envelope builder

@@ -215,20 +215,20 @@ describe('PaymentsController cursor pagination', () => {
   });
 
   it('rejects limit > 100 with 400', async () => {
-    await controller.getPayments(
-      { query: { limit: '200' }, user: { id: 'user-1' } } as any,
-      mockReply,
-    );
-
-    expect(mockReply.status).toHaveBeenCalledWith(400);
+    await expect(
+      controller.getPayments(
+        { query: { limit: '200' }, user: { id: 'user-1' } } as any,
+        mockReply,
+      ),
+    ).rejects.toThrow('Invalid query');
   });
 
   it('rejects limit = 0 with 400', async () => {
-    await controller.getPayments(
-      { query: { limit: '0' }, user: { id: 'user-1' } } as any,
-      mockReply,
-    );
-
-    expect(mockReply.status).toHaveBeenCalledWith(400);
+    await expect(
+      controller.getPayments(
+        { query: { limit: '0' }, user: { id: 'user-1' } } as any,
+        mockReply,
+      ),
+    ).rejects.toThrow('Invalid query');
   });
 });

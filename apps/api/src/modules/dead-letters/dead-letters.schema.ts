@@ -25,10 +25,17 @@ export const sandboxReplayIdSchema = z.object({
 export const sandboxReplayInputSchema = z.object({
   mockStatusCode: z.coerce.number().int().min(100).max(599).optional().default(200),
   mockResponseBody: z.string().optional(),
-  mockResponseHeaders: z.record(z.string()).optional(),
+  mockResponseHeaders: z.record(z.string(), z.string()).optional(),
 });
 
 export const listSandboxReplaysQuerySchema = z.object({
   limit: limitSchema,
   cursor: cursorSchema,
 });
+
+export type SandboxMockResponse = {
+  status: number;
+  body: string;
+  headers: Record<string, string>;
+  delayMs: number;
+};

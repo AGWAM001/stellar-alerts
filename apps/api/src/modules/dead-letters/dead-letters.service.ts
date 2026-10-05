@@ -2,6 +2,7 @@ import { prisma } from '../../lib/prisma';
 import { buildDeliveryKey } from '../../lib/delivery';
 import { processAlertDispatch, type AlertJobData } from '../../lib/queue';
 import { CursorError } from '../../utils/pagination';
+import { toAlertJobData } from './dead-letters.envelope';
 
 export interface DeadLetterListParams {
   channel?: string;

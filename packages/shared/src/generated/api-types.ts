@@ -53,37 +53,20 @@ export interface components {
             note?: string;
         };
         SandboxReplayIdParams: {
-            replayId: string;
+            id: string;
         };
         SandboxReplayInput: {
-            /**
-             * @default {
-             *       "status": 200,
-             *       "headers": {},
-             *       "body": "",
-             *       "delayMs": 0
-             *     }
-             */
-            mockResponse: {
-                /** @default 200 */
-                status: number;
-                /** @default {} */
-                headers: {
-                    [key: string]: string;
-                };
-                /** @default  */
-                body: string;
-                /** @default 0 */
-                delayMs: number;
+            /** @default 200 */
+            mockStatusCode: number;
+            mockResponseBody?: string;
+            mockResponseHeaders?: {
+                [key: string]: string;
             };
         };
         ListSandboxReplaysQuery: {
-            /** @enum {string} */
-            status?: "completed" | "failed";
-            /** @default 1 */
-            page: number;
             /** @default 20 */
-            pageSize: number;
+            limit: number;
+            cursor?: string;
         };
         ErrorResponse: {
             error: {
