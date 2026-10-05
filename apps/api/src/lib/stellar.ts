@@ -455,7 +455,11 @@ export const stellar = {
   async getAccountSigners(
     publicKey: string,
     options: { timeoutMs?: number; signal?: AbortSignal } = {},
-  ): Promise<{ signers: MultisigSigner[]; thresholds: MultisigThresholds } | null> {
+  ): Promise<{
+    signers: MultisigSigner[];
+    thresholds: MultisigThresholds;
+    masterWeight: number;
+  } | null> {
     if (!publicKey || !isValidEd25519PublicKey(publicKey)) {
       console.warn(`[Stellar] Skipping invalid public key format or checksum: "${publicKey}"`);
       return null;
