@@ -63,6 +63,13 @@ jobs:
       # A load test must measure server capacity, not the rate limiter —
       # raise it far above anything this benchmark can generate.
       RATE_LIMIT_MAX: '1000000'
+      # Keep the benchmark focused on request capacity, not observability
+      # overhead: silence per-request info logs, skip the background watcher
+      # (it polls the same disposable DB), and disable OTLP tracing (no
+      # collector in this job; span creation still costs CPU per request).
+      LOG_LEVEL: 'warn'
+      START_WORKER: 'false'
+      OTEL_SDK_DISABLED: 'true'
 
     steps:
       - name: Checkout Repository
