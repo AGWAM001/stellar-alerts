@@ -10,13 +10,20 @@ const envSchema = z.object({
   REDIS_SENTINEL_MASTER_NAME: z.string().optional().default("mymaster"),
   REDIS_SENTINEL_PASSWORD: z.string().optional(),
   PORT: z.string().optional().default("3001"),
+  // Comma-separated browser origins allowed to send cookie-authenticated mutations.
+  CSRF_ALLOWED_ORIGINS: z.string().optional().default("http://localhost:3000"),
   MASTER_ENCRYPTION_KEY: z.string().min(32).describe('Master key for encrypting webhook secrets (AES-256-GCM)'),
   MASTER_ENCRYPTION_KEY_VERSION: z.string().optional().default("1"),
   MASTER_ENCRYPTION_OLD_KEYS: z.string().optional().default("{}"),
+  // Discord application public key used to verify interaction webhooks
+  // (acknowledge / snooze / re-route buttons on alert messages). Unset disables
+  // the /integrations/discord/interactions route.
+  DISCORD_PUBLIC_KEY: z.string().optional(),
   // Requests/minute allowed per client before @fastify/rate-limit responds 429.
   // Overridable so load-test runs (k6, etc.) can measure real server capacity
   // instead of hitting the rate limiter almost immediately.
   RATE_LIMIT_MAX: z.coerce.number().int().positive().optional().default(100),
+  WORKER_MAX_ATTEMPTS: z.coerce.number().int().positive().max(20).optional().default(5),
   SOROBAN_RENT_WORKER_ENABLED: z.string().optional().default("true"),
   SOROBAN_RENT_WORKER_INTERVAL_MS: z.string().optional().default("60000"),
   SOROBAN_RENT_WORKER_SECRET: z.string().optional(),
@@ -46,6 +53,12 @@ const envSchema = z.object({
   MULTISIG_INACTIVITY_INTERVAL_MS: z.string().optional().default("3600000"),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional().default("http://localhost:4318/v1/traces"),
   OTEL_SERVICE_NAME: z.string().optional().default("stellar-alerts-api"),
+  // Workers register their own tracer so Jaeger can attribute webhook dispatch
+  // spans to the dispatcher rather than to the API service.
+  OTEL_WORKER_SERVICE_NAME: z.string().optional().default("stellar-alerts-webhook-dispatcher"),
+  // Opt-in Prometheus scrape port for worker processes. Unset by default, in
+  // which case no listener is opened.
+  WORKER_METRICS_PORT: z.coerce.number().int().positive().optional(),
   // Provider timeouts & deadlines (#303)
   EXTERNAL_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().optional().default(10000),
   HORIZON_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().optional().default(10000),
@@ -79,6 +92,29 @@ const envSchema = z.object({
   EXPORT_CLEANUP_INTERVAL_MS: z.coerce.number().int().positive().optional().default(600000),
   // A job stuck in `running` longer than this (e.g. worker crash) is failed.
   EXPORT_STALE_JOB_MS: z.coerce.number().int().positive().optional().default(1800000),
+  // ── Pre-execution simulation engine ──────────────────────────────────────
+  // Thresholds for the envelope risk engine (apps/api/src/services/simulation).
+  // Each maps to one rule family, so tuning a detection never requires a code
+  // change; see docs/simulation.md for what each threshold gates.
+  /** Outflow/pre-balance ratio at/above which an asset counts as drained. */
+  SIMULATION_NEAR_TOTAL_OUTFLOW_RATIO: z.coerce.number().positive().max(1).optional().default(0.85),
+  /** Distinct destinations in one envelope that count as a fan-out. */
+  SIMULATION_FAN_OUT_DESTINATION_THRESHOLD: z.coerce.number().int().positive().optional().default(3),
+  /** Outgoing transfers from one source that count as a burst. */
+  SIMULATION_SEQUENTIAL_TRANSFER_THRESHOLD: z.coerce.number().int().positive().optional().default(8),
+  /** Declared read-write footprint keys above this are flagged as unbounded growth. */
+  SIMULATION_MAX_FOOTPRINT_READ_WRITE_KEYS: z.coerce.number().int().positive().optional().default(64),
+  /** Distinct contracts spanned by a footprint that count as key probing. */
+  SIMULATION_FOOTPRINT_PROBE_CONTRACT_THRESHOLD: z.coerce.number().int().positive().optional().default(5),
+  /** Invocations of one contract in one envelope that count as fan-out. */
+  SIMULATION_MAX_INVOCATIONS_PER_CONTRACT: z.coerce.number().int().positive().optional().default(5),
+  /** Threat score at/above which a result is reported as block-recommended. */
+  SIMULATION_RISK_BLOCK_THRESHOLD: z.coerce.number().int().min(0).max(100).optional().default(80),
+  /**
+   * Amounts at/below this (in stroops) are treated as dust by the drain
+   * detector. Default 10 stroops == 0.000001 units.
+   */
+  SIMULATION_DUST_AMOUNT_STROOPS: z.coerce.number().int().min(0).optional().default(10),
 });
 export type Env = z.infer<typeof envSchema>;
 
@@ -94,6 +130,20 @@ const EXPORT_DEFAULTS = {
   EXPORT_WORKER_CONCURRENCY: 2,
   EXPORT_CLEANUP_INTERVAL_MS: 600000,
   EXPORT_STALE_JOB_MS: 1800000,
+};
+
+// Simulation-engine defaults, shared by the dev/test fallbacks below. Grouped
+// like EXPORT_DEFAULTS so a new simulation threshold only has to be added here
+// and to the schema above.
+const SIMULATION_DEFAULTS = {
+  SIMULATION_NEAR_TOTAL_OUTFLOW_RATIO: 0.85,
+  SIMULATION_FAN_OUT_DESTINATION_THRESHOLD: 3,
+  SIMULATION_SEQUENTIAL_TRANSFER_THRESHOLD: 8,
+  SIMULATION_MAX_FOOTPRINT_READ_WRITE_KEYS: 64,
+  SIMULATION_FOOTPRINT_PROBE_CONTRACT_THRESHOLD: 5,
+  SIMULATION_MAX_INVOCATIONS_PER_CONTRACT: 5,
+  SIMULATION_RISK_BLOCK_THRESHOLD: 80,
+  SIMULATION_DUST_AMOUNT_STROOPS: 10,
 };
 
 const parseEnv = (): Env => {
@@ -177,6 +227,7 @@ const parseEnv = (): Env => {
       MASTER_ENCRYPTION_KEY_VERSION: "1",
       MASTER_ENCRYPTION_OLD_KEYS: "{}",
       RATE_LIMIT_MAX: 100,
+      WORKER_MAX_ATTEMPTS: 5,
       SOROBAN_RENT_WORKER_ENABLED: "true",
       SOROBAN_RENT_WORKER_INTERVAL_MS: "60000",
       SOROBAN_RENT_WORKER_SECRET: undefined,
@@ -196,6 +247,7 @@ const parseEnv = (): Env => {
       WASM_ANALYZER_MAX_UPLOAD_BYTES: 5 * 1024 * 1024,
       WASM_ANALYZER_TIMEOUT_MS: 5000,
       ...EXPORT_DEFAULTS,
+      ...SIMULATION_DEFAULTS,
     } as unknown as Env;
   }
 
@@ -208,7 +260,9 @@ const parseEnv = (): Env => {
     REDIS_SENTINEL_MASTER_NAME: "mymaster",
     REDIS_SENTINEL_PASSWORD: undefined,
     PORT: "3001",
+    CSRF_ALLOWED_ORIGINS: "http://localhost:3000",
     RATE_LIMIT_MAX: 100,
+    WORKER_MAX_ATTEMPTS: 5,
     SOROBAN_RENT_WORKER_ENABLED: "true",
     SOROBAN_RENT_WORKER_INTERVAL_MS: "60000",
     SOROBAN_RENT_WORKER_SECRET: undefined,
@@ -223,6 +277,7 @@ const parseEnv = (): Env => {
     SOROBAN_INDEXER_BENCHMARK_DATA_ROWS: "10000",
     SOROBAN_STAKING_REWARD_WORKER_ENABLED: "true",
     ...EXPORT_DEFAULTS,
+    ...SIMULATION_DEFAULTS,
   } as unknown as Env;
 };
 

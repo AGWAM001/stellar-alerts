@@ -130,6 +130,21 @@ Or launch components individually from the project root:
 
 ---
 
+## Production TypeScript `any` Policy
+
+Production TypeScript under `apps/*/src` and `packages/*/src` must not introduce new explicit `any` types or casts. Tests, generated sources, and declaration files are excluded. Existing occurrences are recorded in an owned baseline so they can be removed incrementally without blocking unrelated work.
+
+Run the policy and its focused tests before opening a PR:
+
+```bash
+npm run quality:any
+npm run test:quality
+```
+
+When removing an existing occurrence, run `npm run quality:any:update` and commit the smaller baseline. The update command refuses to expand the baseline. If an exception is unavoidable, run `npm run quality:any` to obtain its fingerprint, then add it to the baseline manually with an accountable owner and a compatibility rationale; reviewers must approve that exception. CI rejects new occurrences, undocumented exceptions, changed fingerprints, and stale allowances.
+
+---
+
 ## 🛠️ Development Workflow & Guidelines
 
 1. **Branch Naming**:
@@ -143,7 +158,23 @@ Or launch components individually from the project root:
    - `fix(worker): handle network timeout on horizon query`
    - `docs: update setup guide in CONTRIBUTING.md`
 
-3. **Testing with Stellar Testnet**:
+3. **Architecture Decisions (ADRs)**:
+   Before changing ingestion, queueing, or notification delivery, read the
+   relevant ADR. These record the decision as implemented, the tradeoffs
+   accepted, and known gaps between design and code — each claim is cited to a
+   `file:line` you can verify.
+
+   | Area | ADR |
+   |---|---|
+   | Ingestion | [0001 — Horizon paging-token cursors with bounded backfill](docs/adr/0001-horizon-cursor-ingestion.md) |
+   | Queueing | [0002 — BullMQ on Redis for the payment-alert queue and DLQ](docs/adr/0002-bullmq-payment-alert-queue.md) |
+   | Notification delivery | [0003 — Content-addressed delivery keys and idempotency](docs/adr/0003-notification-delivery-idempotency.md) |
+
+   Index and format: [`docs/adr/README.md`](docs/adr/README.md). If your change
+   supersedes a decision, add a new ADR and mark the old one Superseded rather
+   than editing its rationale.
+
+4. **Testing with Stellar Testnet**:
    - Always test blockchain operations against **Stellar Testnet**.
    - Fund test public keys using [Stellar Friendbot](https://friendbot.stellar.org).
    - Never use real Stellar mainnet secret keys or funds during development!
