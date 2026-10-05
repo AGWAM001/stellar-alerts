@@ -53,7 +53,7 @@ export interface components {
             note?: string;
         };
         SandboxReplayIdParams: {
-            id: string;
+            replayId: string;
         };
         SandboxReplayInput: {
             /** @default 200 */

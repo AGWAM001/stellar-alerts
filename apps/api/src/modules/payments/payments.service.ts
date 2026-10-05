@@ -88,11 +88,16 @@ export class PaymentsService {
     const sortBy = filters.sortBy ?? 'receivedAt';
     const sortOrder = filters.sortOrder ?? 'desc';
 
-    console.log(
-      `[PaymentsService] Fetching up to ${limit} payments for user ${userId}${
-        walletId ? ` (wallet ${walletId})` : ' (all wallets)'
-      }, sorted by ${sortBy} ${sortOrder}${filters.cursor ? ' (cursor page)' : ''}`
-    );
+    // Hot path (dashboard + k6 load test): avoid per-request console.log —
+    // synchronous stdout blocks the event loop under concurrent load.
+    // Debug logging stays available via LOG_LEVEL=debug.
+    if (process.env.LOG_LEVEL === 'debug') {
+      console.debug(
+        `[PaymentsService] Fetching up to ${limit} payments for user ${userId}${
+          walletId ? ` (wallet ${walletId})` : ' (all wallets)'
+        }, sorted by ${sortBy} ${sortOrder}${filters.cursor ? ' (cursor page)' : ''}`,
+      );
+    }
 
     // Fetch limit+1 to detect whether a next page exists.
     // Export callers pass limit=5000 and no cursor, so the +1 is negligible.
@@ -128,11 +133,13 @@ export class PaymentsService {
           ? { walletId, wallet: { userId } }
           : { wallet: { userId } };
 
-        console.log(
-          `[PaymentsService] Fetching summary for user ${userId}${
-            walletId ? ` (wallet ${walletId})` : ' (all wallets)'
-          }`,
-        );
+        if (process.env.LOG_LEVEL === 'debug') {
+          console.debug(
+            `[PaymentsService] Fetching summary for user ${userId}${
+              walletId ? ` (wallet ${walletId})` : ' (all wallets)'
+            }`,
+          );
+        }
 
         const result = await prismaRead.payment.aggregate({
           where,
@@ -175,7 +182,9 @@ export class PaymentsService {
    * Epsilon parameter controls privacy budget (lower epsilon = more privacy/noise).
    */
   async getPublicVolumeStats(epsilon: number = 0.5) {
-    console.log(`[PaymentsService] Fetching differentially private public volume stats (epsilon=${epsilon})`);
+    if (process.env.LOG_LEVEL === 'debug') {
+      console.debug(`[PaymentsService] Fetching differentially private public volume stats (epsilon=${epsilon})`);
+    }
     const aggregate = await prisma.payment.aggregate({
       _sum: { amount: true },
       _count: { id: true },
@@ -198,9 +207,11 @@ export class PaymentsService {
    * Calculates combined daily volume, transaction count, and average payment size.
    */
   async getCrossLedgerAnalytics(userId?: string, walletId?: string) {
-    console.log(
-      `[PaymentsService] Fetching cross-ledger analytics for user ${userId || 'all'}${walletId ? ` (wallet ${walletId})` : ''}`,
-    );
+    if (process.env.LOG_LEVEL === 'debug') {
+      console.debug(
+        `[PaymentsService] Fetching cross-ledger analytics for user ${userId || 'all'}${walletId ? ` (wallet ${walletId})` : ''}`,
+      );
+    }
 
     const paymentsWhere = walletId
       ? { walletId, wallet: { userId } }
