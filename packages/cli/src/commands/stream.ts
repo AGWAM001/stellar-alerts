@@ -75,36 +75,44 @@ export function registerStreamCommands(program: Command): void {
     .option('--max-retries <number>', 'Consecutive reconnect attempts before giving up (default: unlimited)')
     .option('--max-backoff <ms>', 'Upper bound for the reconnect delay in milliseconds', '60000')
     .action(async (options: WatchOptions) => {
-      const auth = resolveAuth(options.token, program.opts().apiUrl);
-      const client = new ApiClient(auth.apiUrl, auth.token);
-
-      const maxRetries = parseNonNegativeInt(options.maxRetries, '--max-retries');
-      const maxDelayMs = parseNonNegativeInt(options.maxBackoff, '--max-backoff');
-      if (maxRetries === null || maxDelayMs === null) {
-        process.exitCode = 1;
-        return;
-      }
-
       const abortController = new AbortController();
-      const shutdown = () => {
+      const onSigInt = () => {
         if (abortController.signal.aborted) {
           // Second signal: the user wants out now.
           process.exit(130);
         }
         abortController.abort();
       };
-      process.on('SIGINT', shutdown);
-      process.on('SIGTERM', shutdown);
+      const onSigTerm = () => {
+        if (abortController.signal.aborted) {
+          // Second signal: the user wants out now.
+          process.exit(130);
+        }
+        abortController.abort();
+      };
 
-      const store = options.resume === false
-        ? undefined
-        : new CursorStore(options.cursorFile ?? defaultCursorFile(options.wallet), warn);
-      const initialCursor = options.cursor === undefined ? undefined : options.cursor === 'now' ? '' : options.cursor;
-
-      printHeader();
-      console.log(chalk.gray('Connecting to payment stream...'));
+      process.on('SIGINT', onSigInt);
+      process.on('SIGTERM', onSigTerm);
 
       try {
+        const auth = resolveAuth(options.token, program.opts().apiUrl);
+        const client = new ApiClient(auth.apiUrl, auth.token);
+
+        const maxRetries = parseNonNegativeInt(options.maxRetries, '--max-retries');
+        const maxDelayMs = parseNonNegativeInt(options.maxBackoff, '--max-backoff');
+        if (maxRetries === null || maxDelayMs === null) {
+          process.exitCode = 1;
+          return;
+        }
+
+        const store = options.resume === false
+          ? undefined
+          : new CursorStore(options.cursorFile ?? defaultCursorFile(options.wallet), warn);
+        const initialCursor = options.cursor === undefined ? undefined : options.cursor === 'now' ? '' : options.cursor;
+
+        printHeader();
+        console.log(chalk.gray('Connecting to payment stream...'));
+
         const result = await runResilientStream({
           connect: (cursor, signal) =>
             client.openPaymentStream({ cursor: cursor || undefined, walletId: options.wallet, signal }),
@@ -136,8 +144,8 @@ export function registerStreamCommands(program: Command): void {
         console.error(chalk.red(`\n❌ Error: ${(error as Error).message}`));
         process.exitCode = 1;
       } finally {
-        process.off('SIGINT', shutdown);
-        process.off('SIGTERM', shutdown);
+        process.off('SIGINT', onSigInt);
+        process.off('SIGTERM', onSigTerm);
       }
     });
 
