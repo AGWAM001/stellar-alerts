@@ -193,7 +193,8 @@ describe('Composite Index Optimization Tests', () => {
           txHash: 'delivery-test-hash',
           fromAddress: 'GFROM' + 'E'.repeat(51),
           amount: 50,
-          asset: 'XLM'
+          asset: 'XLM',
+          receivedAt: new Date()
         }
       });
       testPaymentIds.push(testPayment.id);
@@ -273,7 +274,8 @@ describe('Composite Index Optimization Tests', () => {
           txHash: 'multi-delivery-hash',
           fromAddress: 'GFROM' + 'G'.repeat(51),
           amount: 75,
-          asset: 'XLM'
+          asset: 'XLM',
+          receivedAt: new Date()
         }
       });
       testPaymentIds.push(testPayment.id);
