@@ -21,7 +21,7 @@ export class DeadLettersController {
       return reply.send({ success: true, deadLetters: result.items, pagination: result.pagination });
     } catch (err) {
       if (err instanceof CursorError) {
-        return reply.status(400).send({ error: 'Invalid cursor', message: (err as Error).message });
+        throw new ValidationError('Invalid cursor', [{ path: ['cursor'], message: (err as Error).message }]);
       }
       throw err;
     }

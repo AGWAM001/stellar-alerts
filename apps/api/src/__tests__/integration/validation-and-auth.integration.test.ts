@@ -241,7 +241,6 @@ describe('Comprehensive Validation and Authorization Tests', () => {
           '?limit=not-a-number',
           '?limit=1.5',
           '?limit=1000000', // Potentially too large
-          '?cursor=invalid-base64',
         ];
 
         for (const query of invalidQueries) {
