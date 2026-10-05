@@ -36,11 +36,19 @@ let dbIndexCursor: number | null = null;
 
 function pickDbIndex(): number {
   const explicit = process.env.TEST_REDIS_DB;
-  if (explicit && Number.isFinite(Number(explicit))) return Number(explicit);
+  if (explicit !== undefined && explicit !== '') {
+    const parsed = Number(explicit);
+    if (Number.isInteger(parsed) && parsed >= 0 && parsed < 16) return parsed;
+  }
 
   if (dbIndexCursor === null) {
-    const workerId = Number(process.env.VITEST_POOL_ID ?? process.env.JEST_WORKER_ID ?? process.pid);
-    dbIndexCursor = workerId % 16;
+    const raw =
+      process.env.VITEST_POOL_ID ??
+      process.env.VITEST_WORKER_ID ??
+      process.env.JEST_WORKER_ID ??
+      String(process.pid);
+    const workerId = Number(raw);
+    dbIndexCursor = Number.isFinite(workerId) ? Math.abs(Math.trunc(workerId)) % 16 : 0;
   }
   return dbIndexCursor;
 }

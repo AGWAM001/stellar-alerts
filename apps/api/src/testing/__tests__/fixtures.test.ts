@@ -93,32 +93,41 @@ describe.skipIf(!redisAvailable)('redis fixture', () => {
   });
 
   it('set/get/del roundtrip works through the fixture client', async () => {
-    await fixture.redis.set('probe-key', 'probe-value');
-    expect(await fixture.redis.get('probe-key')).toBe('probe-value');
-    await fixture.redis.del('probe-key');
-    expect(await fixture.redis.get('probe-key')).toBeNull();
+    const key = `${fixture.prefix}probe-key`;
+    await fixture.redis.set(key, 'probe-value');
+    expect(await fixture.redis.get(key)).toBe('probe-value');
+    await fixture.redis.del(key);
+    expect(await fixture.redis.get(key)).toBeNull();
   });
 
   it('reset() deletes every key under the prefix only', async () => {
-    await fixture.redis.set('a', '1');
-    await fixture.redis.set('b', '2');
+    const aKey = `${fixture.prefix}a`;
+    const bKey = `${fixture.prefix}b`;
+    await fixture.redis.set(aKey, '1');
+    await fixture.redis.set(bKey, '2');
     await fixture.redis.set('unprefixed-key', 'keep-me');
 
-    await fixture.reset();
+    try {
+      await fixture.reset();
 
-    expect(await fixture.redis.get('a')).toBeNull();
-    expect(await fixture.redis.get('b')).toBeNull();
-    expect(await fixture.redis.get('unprefixed-key')).toBe('keep-me');
+      expect(await fixture.redis.get(aKey)).toBeNull();
+      expect(await fixture.redis.get(bKey)).toBeNull();
+      expect(await fixture.redis.get('unprefixed-key')).toBe('keep-me');
+    } finally {
+      await fixture.redis.del('unprefixed-key').catch(() => undefined);
+    }
   });
 
   it('two fixtures get different prefixes and isolated keys', async () => {
     const other = await createRedisFixture();
     try {
       expect(other.prefix).not.toBe(fixture.prefix);
-      await fixture.redis.set('shared-name', 'from-first');
-      await other.redis.set('shared-name', 'from-second');
-      expect(await fixture.redis.get('shared-name')).toBe('from-first');
-      expect(await other.redis.get('shared-name')).toBe('from-second');
+      const firstKey = `${fixture.prefix}shared-name`;
+      const secondKey = `${other.prefix}shared-name`;
+      await fixture.redis.set(firstKey, 'from-first');
+      await other.redis.set(secondKey, 'from-second');
+      expect(await fixture.redis.get(firstKey)).toBe('from-first');
+      expect(await other.redis.get(secondKey)).toBe('from-second');
     } finally {
       await other.teardown();
     }

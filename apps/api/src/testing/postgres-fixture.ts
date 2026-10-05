@@ -110,15 +110,24 @@ async function replayMigrations(databaseName: string): Promise<void> {
     );
   }
 
-  execFileSync(
-    process.execPath,
-    [prismaBin, 'migrate', 'deploy', '--schema', 'prisma/schema.prisma'],
-    {
-      cwd: apiRoot,
-      env: { ...process.env, DATABASE_URL: urlForDatabase(databaseName) },
-      stdio: 'pipe',
-    },
-  );
+  try {
+    execFileSync(
+      process.execPath,
+      [prismaBin, 'migrate', 'deploy', '--schema', 'prisma/schema.prisma'],
+      {
+        cwd: apiRoot,
+        env: { ...process.env, DATABASE_URL: urlForDatabase(databaseName) },
+        stdio: 'pipe',
+      },
+    );
+  } catch (err) {
+    const e = err as { stdout?: Buffer; stderr?: Buffer; message?: string };
+    const stdout = e.stdout?.toString().slice(-2000) ?? '';
+    const stderr = e.stderr?.toString().slice(-2000) ?? '';
+    throw new Error(
+      `prisma migrate deploy failed for template database "${databaseName}": ${e.message ?? err}\nstdout:\n${stdout}\nstderr:\n${stderr}`,
+    );
+  }
 }
 
 async function databaseExists(admin: PrismaClient, name: string): Promise<boolean> {
@@ -153,16 +162,34 @@ function adminClient(url: string, max = 3): PrismaClient {
  */
 async function ensureTemplate(maintenance: PrismaClient): Promise<string> {
   const template = templateDatabaseName();
-  let templateDb = adminClient(urlForDatabase(template), 1);
-  try {
-    const fingerprint = migrationsFingerprint();
+  const fingerprint = migrationsFingerprint();
 
-    const fresh = !(await databaseExists(maintenance, template));
-    if (fresh) {
-      await createDatabase(maintenance, template);
-      templateDb = adminClient(urlForDatabase(template), 1);
+  async function buildFreshTemplate(): Promise<void> {
+    await createDatabase(maintenance, template);
+    await replayMigrations(template);
+    const templateDb = adminClient(urlForDatabase(template), 1);
+    try {
+      await templateDb.$executeRawUnsafe(
+        `CREATE TABLE IF NOT EXISTS template_meta (key text PRIMARY KEY, value text)`,
+      );
+      await templateDb.$executeRawUnsafe(
+        `INSERT INTO template_meta (key, value) VALUES ('fingerprint', $1)
+         ON CONFLICT (key) DO UPDATE SET value = $1`,
+        fingerprint,
+      );
+    } finally {
+      await templateDb.$disconnect().catch(() => undefined);
     }
+  }
 
+  const exists = await databaseExists(maintenance, template);
+  if (!exists) {
+    await buildFreshTemplate();
+    return template;
+  }
+
+  const templateDb = adminClient(urlForDatabase(template), 1);
+  try {
     const tableRows = await templateDb.$queryRawUnsafe<Array<{ tablename: string }>>(
       `SELECT tablename FROM pg_tables
        WHERE schemaname NOT IN ('pg_catalog', 'information_schema') LIMIT 1`,
@@ -175,27 +202,17 @@ async function ensureTemplate(maintenance: PrismaClient): Promise<string> {
 
     const stale =
       tableRows.length === 0 || markerRows.length === 0 || markerRows[0].value !== fingerprint;
-    if (stale) {
-      await templateDb.$disconnect().catch(() => undefined);
-      await dropDatabase(maintenance, template);
-      await createDatabase(maintenance, template);
-      await replayMigrations(template);
-
-      templateDb = adminClient(urlForDatabase(template), 1);
-      await templateDb.$executeRawUnsafe(
-        `CREATE TABLE IF NOT EXISTS template_meta (key text PRIMARY KEY, value text)`,
-      );
-      await templateDb.$executeRawUnsafe(
-        `INSERT INTO template_meta (key, value) VALUES ('fingerprint', $1)
-         ON CONFLICT (key) DO UPDATE SET value = $1`,
-        fingerprint,
-      );
+    if (!stale) {
+      return template;
     }
-
-    return template;
   } finally {
     await templateDb.$disconnect().catch(() => undefined);
   }
+
+  // Stale template: drop and rebuild from the current migration history.
+  await dropDatabase(maintenance, template);
+  await buildFreshTemplate();
+  return template;
 }
 
 export interface PostgresFixture {
