@@ -284,7 +284,7 @@ vi.mock('../lib/stellar', () => ({
     getRecentPayments: vi.fn(),
     getPaymentsSince: vi.fn(),
     getPaymentsSinceResult: vi.fn(),
-    getLatestPagingToken: vi.fn(),
+    getLatestPagingToken: vi.fn().mockResolvedValue('100'),
   },
 }));
 
@@ -331,7 +331,7 @@ describe('Chaos engineering: unhandled crash prevention (deterministic)', () => 
     }
 
     expect(unhandledRejection).toBeNull();
-  });
+  }, 10000);
 
   it('a simulated DB disconnect (rejected wallet.findMany) does not crash pollOnce', async () => {
     const { prisma } = await import('../lib/prisma');

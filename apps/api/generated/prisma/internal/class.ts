@@ -359,6 +359,16 @@ export interface PrismaClient<
   get exportJob(): Prisma.ExportJobDelegate<ExtArgs, { omit: OmitOpts }>;
 
   /**
+   * `prisma.transactionSimulation`: Exposes CRUD operations for the **TransactionSimulation** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TransactionSimulations
+    * const transactionSimulations = await prisma.transactionSimulation.findMany()
+    * ```
+    */
+  get transactionSimulation(): Prisma.TransactionSimulationDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
    * `prisma.sorobanEventSnapshot`: Exposes CRUD operations for the **SorobanEventSnapshot** model.
     * Example usage:
     * ```ts
