@@ -93,7 +93,7 @@ function migrationsFingerprint(): string {
   return hash.digest('hex');
 }
 
-/** Best-effort Prisma migration replay against one database. */
+/** Best-effort Prisma schema sync against one database. */
 async function replayMigrations(databaseName: string): Promise<void> {
   const { execFileSync } = (await import('node:child_process')) as typeof import('node:child_process');
 
@@ -110,24 +110,30 @@ async function replayMigrations(databaseName: string): Promise<void> {
     );
   }
 
-  try {
-    execFileSync(
-      process.execPath,
-      [prismaBin, 'migrate', 'deploy', '--schema', 'prisma/schema.prisma'],
-      {
+  const runPrisma = (args: string[]): void => {
+    try {
+      execFileSync(process.execPath, [prismaBin, ...args], {
         cwd: apiRoot,
         env: { ...process.env, DATABASE_URL: urlForDatabase(databaseName) },
         stdio: 'pipe',
-      },
-    );
-  } catch (err) {
-    const e = err as { stdout?: Buffer; stderr?: Buffer; message?: string };
-    const stdout = e.stdout?.toString().slice(-2000) ?? '';
-    const stderr = e.stderr?.toString().slice(-2000) ?? '';
-    throw new Error(
-      `prisma migrate deploy failed for template database "${databaseName}": ${e.message ?? err}\nstdout:\n${stdout}\nstderr:\n${stderr}`,
-    );
-  }
+      });
+    } catch (err) {
+      const e = err as { stdout?: Buffer; stderr?: Buffer; message?: string };
+      const stdout = e.stdout?.toString().slice(-2000) ?? '';
+      const stderr = e.stderr?.toString().slice(-2000) ?? '';
+      throw new Error(
+        `prisma ${args.join(' ')} failed for template database "${databaseName}": ${e.message ?? err}\nstdout:\n${stdout}\nstderr:\n${stderr}`,
+      );
+    }
+  };
+
+  // Replay migration history first so `_prisma_migrations` reflects the
+  // canonical history, then `db push` to converge any schema drift (e.g.
+  // columns added to schema.prisma without a corresponding migration file).
+  // `db push` is what CI's validate job uses, so the template matches the
+  // schema the Prisma Client was generated from.
+  runPrisma(['migrate', 'deploy', '--schema', 'prisma/schema.prisma']);
+  runPrisma(['db', 'push', '--schema', 'prisma/schema.prisma']);
 }
 
 async function databaseExists(admin: PrismaClient, name: string): Promise<boolean> {
