@@ -65,7 +65,7 @@ export class WebhookSandboxController {
 
     try {
       const userId = (request as any).user.id;
-      const replay = await webhookSandboxService.getReplay(parsed.data.id, userId);
+      const replay = await webhookSandboxService.getReplay(parsed.data.replayId, userId);
       return reply.send({ success: true, replay });
     } catch (error: any) {
       if (error.message.startsWith('Sandbox replay')) {
