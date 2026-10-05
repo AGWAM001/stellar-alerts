@@ -120,6 +120,196 @@ export interface components {
             expires: number;
             sig: string;
         };
+        AnalyzeSimulationInput: {
+            sourceAccount: string;
+            /** @enum {string} */
+            network?: "PUBLIC" | "TESTNET" | "FUTURENET";
+            label?: string;
+            envelopeXdr?: string;
+            operations: {
+                /** @enum {string} */
+                kind: "pay" | "pathPaymentStrictReceive" | "pathPaymentStrictSend" | "accountMerge" | "clawback" | "changeTrust" | "setTrustlineFlags" | "createAccount" | "createContract" | "uploadWasm" | "invokeContract" | "extendFootprintTtl" | "restoreFootprint" | "bumpSequence" | "setOptions" | "manageSellOffer" | "liquidityPoolWithdraw" | "unknown";
+                source?: string;
+                destination?: string;
+                asset?: {
+                    /** @enum {string} */
+                    type: "native" | "credit_alphanumeric" | "liquidity_pool";
+                    code?: string;
+                    issuer?: string;
+                    poolId?: string;
+                };
+                amount?: string;
+                contractId?: string;
+                function?: string;
+                args?: unknown[];
+                trustlineAsset?: {
+                    /** @enum {string} */
+                    type: "native" | "credit_alphanumeric" | "liquidity_pool";
+                    code?: string;
+                    issuer?: string;
+                    poolId?: string;
+                };
+                trustlineFlagMask?: number;
+            }[];
+            resources?: {
+                footprint?: {
+                    readOnly?: {
+                        key: string;
+                        entryType: string;
+                        contractId?: string;
+                        /** @enum {string} */
+                        access: "readOnly" | "readWrite" | "archived";
+                    }[];
+                    readWrite?: {
+                        key: string;
+                        entryType: string;
+                        contractId?: string;
+                        /** @enum {string} */
+                        access: "readOnly" | "readWrite" | "archived";
+                    }[];
+                    archived?: {
+                        key: string;
+                        entryType: string;
+                        contractId?: string;
+                        /** @enum {string} */
+                        access: "readOnly" | "readWrite" | "archived";
+                    }[];
+                };
+                requiredFootprint?: {
+                    readOnly?: {
+                        key: string;
+                        entryType: string;
+                        contractId?: string;
+                        /** @enum {string} */
+                        access: "readOnly" | "readWrite" | "archived";
+                    }[];
+                    readWrite?: {
+                        key: string;
+                        entryType: string;
+                        contractId?: string;
+                        /** @enum {string} */
+                        access: "readOnly" | "readWrite" | "archived";
+                    }[];
+                    archived?: {
+                        key: string;
+                        entryType: string;
+                        contractId?: string;
+                        /** @enum {string} */
+                        access: "readOnly" | "readWrite" | "archived";
+                    }[];
+                };
+                ledgerBounds?: {
+                    min: number;
+                    max: number;
+                } | null;
+                auth?: {
+                    credentialsAddress?: string;
+                    contractId?: string;
+                    function?: string;
+                }[];
+                hasTimeBounds?: boolean;
+                feeStroops?: string;
+                operationCount?: number;
+            };
+            /** @default [] */
+            preState: {
+                accountId: string;
+                nativeBalance?: string;
+                balances?: {
+                    asset: {
+                        /** @enum {string} */
+                        type: "native" | "credit_alphanumeric" | "liquidity_pool";
+                        code?: string;
+                        issuer?: string;
+                        poolId?: string;
+                    };
+                    balance: string;
+                    limit?: string;
+                    revocable?: boolean;
+                }[];
+            }[];
+            postState?: {
+                accountId: string;
+                nativeBalance?: string;
+                balances?: {
+                    asset: {
+                        /** @enum {string} */
+                        type: "native" | "credit_alphanumeric" | "liquidity_pool";
+                        code?: string;
+                        issuer?: string;
+                        poolId?: string;
+                    };
+                    balance: string;
+                    limit?: string;
+                    revocable?: boolean;
+                }[];
+            }[];
+            outcome?: {
+                ledger?: number;
+                success?: boolean;
+                errors?: {
+                    /** @enum {string} */
+                    type: "custom_error" | "panic" | "host_error" | "invocation_error";
+                    code?: number;
+                    message: string;
+                    contractId?: string;
+                    function?: string;
+                }[];
+                resultingBalances?: {
+                    accountId: string;
+                    nativeBalance?: string;
+                    balances?: {
+                        asset: {
+                            /** @enum {string} */
+                            type: "native" | "credit_alphanumeric" | "liquidity_pool";
+                            code?: string;
+                            issuer?: string;
+                            poolId?: string;
+                        };
+                        balance: string;
+                        limit?: string;
+                        revocable?: boolean;
+                    }[];
+                }[];
+                events?: {
+                    contractId?: string;
+                    type?: string;
+                    value?: unknown;
+                }[];
+                feeStroops?: string;
+            };
+            contracts?: {
+                contractId: string;
+                wasmHash?: string;
+                deployed?: boolean;
+                codeArchived?: boolean;
+            }[];
+            trustRegistry?: {
+                byContractId?: {
+                    [key: string]: {
+                        contractId: string;
+                        verified?: boolean;
+                        wasmHash?: string;
+                        deployer?: string;
+                        verifiedAt?: string;
+                    };
+                };
+                allowlist?: string[];
+                trustedDeployers?: string[];
+            };
+        };
+        SimulationIdParams: {
+            id: string;
+        };
+        ListSimulationsQuery: {
+            /** @default 1 */
+            page: number;
+            /** @default 20 */
+            pageSize: number;
+            /** @enum {string} */
+            band?: "SAFE" | "LOW" | "MODERATE" | "HIGH" | "CRITICAL";
+            sourceAccount?: string;
+        };
     };
     responses: never;
     parameters: never;
