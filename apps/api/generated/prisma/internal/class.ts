@@ -229,6 +229,16 @@ export interface PrismaClient<
   get payment(): Prisma.PaymentDelegate<ExtArgs, { omit: OmitOpts }>;
 
   /**
+   * `prisma.outboxEvent`: Exposes CRUD operations for the **OutboxEvent** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OutboxEvents
+    * const outboxEvents = await prisma.outboxEvent.findMany()
+    * ```
+    */
+  get outboxEvent(): Prisma.OutboxEventDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
    * `prisma.notificationPreference`: Exposes CRUD operations for the **NotificationPreference** model.
     * Example usage:
     * ```ts

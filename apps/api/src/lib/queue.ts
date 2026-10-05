@@ -12,6 +12,7 @@ import { prisma } from './prisma';
 import { createLogger } from './logger';
 import { publishDeliveryEvent } from './realtime';
 import { deliverWithIdempotency } from './delivery';
+import { instrumentedWebhookFetch } from './webhook-telemetry';
 import { persistDeadLetter } from './dead-letter';
 import { ssrfSafeFetch, validateUrlForSsrf } from '../utils/ssrf';
 import { decryptPersonalField } from '../utils/privacy';
@@ -50,6 +51,18 @@ export interface AlertJobData {
   receivedAt: string;
   /** Correlation ID propagated from the originating HTTP request, if any. */
   requestId?: string;
+  /**
+   * W3C traceparent of the payment-detection request that produced this job.
+   * Carried across the BullMQ boundary so webhook dispatch spans join the
+   * originating trace instead of starting a disconnected one.
+   */
+  traceparent?: string;
+}
+
+/** Per-dispatch context threaded into the circuit breaker action. */
+interface WebhookDispatchMeta {
+  webhookId: string;
+  traceparent?: string;
 }
 
 const redisHost = process.env.REDIS_HOST || "localhost";
@@ -171,14 +184,17 @@ async function getOrCreateCircuitBreaker(
   }
 
   const breaker: CircuitBreaker<any> = new CircuitBreaker(
-    async (url: string, payload: string, headers: Record<string, string>) => {
-      const response = await ssrfSafeFetch(url, {
-        method: 'POST',
+    async (url: string, payload: string, headers: Record<string, string>, meta?: WebhookDispatchMeta) => {
+      // Routed through the instrumented transport so every attempt contributes
+      // DNS / TCP / TLS / TTFB / response-stream spans and histograms, and so
+      // the subscriber receives a W3C traceparent it can join.
+      const response = await instrumentedWebhookFetch(url, {
+        method: "POST",
         headers,
         body: payload,
-        maxRequestBytes: 1024 * 1024,
-        maxResponseBytes: 64 * 1024,
-        signal: AbortSignal.timeout(env.WEBHOOK_TIMEOUT_MS),
+        timeoutMs: env.WEBHOOK_TIMEOUT_MS,
+        webhookId: meta?.webhookId,
+        traceparent: meta?.traceparent,
       });
 
       if (response.status === 429) {
@@ -276,7 +292,12 @@ async function updateCircuitBreakerState(
   });
 }
 
-export async function dispatchWebhookAndLog(webhookId: string, payload: any, retryAfterBackoff = false) {
+export async function dispatchWebhookAndLog(
+  webhookId: string,
+  payload: any,
+  retryAfterBackoff = false,
+  traceparent?: string,
+) {
   let targetUrl: string | undefined;
 
   try {
@@ -356,10 +377,11 @@ export async function dispatchWebhookAndLog(webhookId: string, payload: any, ret
     const signature = generateWebhookSignature(payloadString, webhookSecret);
 
     const breaker = await getOrCreateCircuitBreaker(webhookId);
+    const dispatchMeta: WebhookDispatchMeta = { webhookId, traceparent };
     const response = await breaker.fire(webhook.url, payloadString, {
       "Content-Type": "application/json",
       "X-Stellar-Signature": signature.headerValue,
-    });
+    }, dispatchMeta);
 
     const responseBody = await response.text();
 
@@ -412,7 +434,7 @@ export async function dispatchWebhookAndLog(webhookId: string, payload: any, ret
       if (!retryAfterBackoff) {
         queueLog.warn(`[WebhookDispatch] Rate limited by ${targetUrl}; retrying after ${delayMs}ms`);
         await waitForAdaptiveBackoff(delayMs);
-        return dispatchWebhookAndLog(webhookId, payload, true);
+        return dispatchWebhookAndLog(webhookId, payload, true, traceparent);
       }
 
       queueLog.warn(`[WebhookDispatch] Endpoint still rate limited after adaptive retry for ${webhookId}`);
@@ -543,9 +565,7 @@ try {
 
   alertWorker = new Worker<AlertJobData>(
     'payment-alerts',
-    async (job) => {
-      return processAlertDispatch(job.data);
-    },
+    paymentAlertWorkerProcessor,
     { connection, concurrency: env.ALERT_WORKER_CONCURRENCY },
   );
 
@@ -691,7 +711,7 @@ export async function processAlertDispatch(data: AlertJobData) {
             },
             async () => {
               await workerFairnessManager.acquireProviderBudget('webhook');
-              await dispatchWebhookAndLog(webhook.id, webhookPayload);
+              await dispatchWebhookAndLog(webhook.id, webhookPayload, false, data.traceparent);
             },
           ).catch((err: any) => {
             queueLog.warn(`[Worker] Webhook dispatch had errors: ${err.message}`);
