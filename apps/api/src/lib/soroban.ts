@@ -10,6 +10,7 @@ import { stellarNetwork } from "../config/network";
 import { sorobanStateService } from "../modules/soroban-state/soroban-state.service";
 import { env } from "../config/env";
 import { withDeadline } from "./external-request";
+import type { EnrichedSorobanEvent, SorobanRpcEvent } from "../types/soroban-event";
 
 export const SOROBAN_RPC_URL = stellarNetwork.sorobanRpcUrl;
 const LEDGER_BATCH_SIZE = 100;

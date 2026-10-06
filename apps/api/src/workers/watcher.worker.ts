@@ -115,6 +115,7 @@ export async function processPaymentRecord(
       span.setAttribute('payment.walletId', wallet.id);
       span.setAttribute('payment.asset', asset);
 
+      const pagingToken = getHorizonPagingToken(record);
       const existing = await prisma.payment.findUnique({ where: { txHash } });
       let payment: { id: string } | null = existing;
       let isNewPayment = false;
@@ -168,52 +169,55 @@ export async function processPaymentRecord(
         }
       }
 
-      if (!existing) {
-        try {
-          payment = await prisma.$transaction(async (tx) => {
-            const createdPayment = await tx.payment.create({
-              data: {
-                walletId: wallet.id,
-                txHash,
-                fromAddress,
-                amount: Number(amount),
-                asset,
-                assetIssuer,
-                memo,
-                receivedAt,
-              },
-            });
+      const transactionResult = await prisma.$transaction(async (tx) => {
+        const inserted = await tx.payment.createMany({
+          data: [{
+            walletId: wallet.id,
+            txHash,
+            fromAddress,
+            amount: Number(amount),
+            asset,
+            assetIssuer,
+            memo,
+            receivedAt,
+          }],
+          skipDuplicates: true,
+        });
+        const persistedPayment = await tx.payment.findUnique({ where: { txHash } });
 
-            const eventPayload = {
-              paymentId: createdPayment.id,
-              txHash,
-              walletId: wallet.id,
-              amount,
-              asset,
-              assetIssuer,
-              fromAddress,
-              receivedAt: receivedAt.toISOString(),
-            };
-            await tx.outboxEvent.createMany({
-              data: [
-                ...(shouldSendAlert
-                  ? [{ eventType: 'payment.alert', aggregateId: createdPayment.id, payload: eventPayload }]
-                  : []),
-                { eventType: 'payment.realtime', aggregateId: createdPayment.id, payload: eventPayload },
-              ],
-            });
+        if (!persistedPayment) {
+          throw new Error(`Payment ${txHash} was not available after its transactional insert`);
+        }
 
-            return createdPayment;
+        if (inserted.count > 0) {
+          const eventPayload = {
+            paymentId: persistedPayment.id,
+            txHash,
+            walletId: wallet.id,
+            amount,
+            asset,
+            assetIssuer,
+            fromAddress,
+            receivedAt: receivedAt.toISOString(),
+          };
+          await tx.outboxEvent.createMany({
+            data: [
+              ...(shouldSendAlert
+                ? [{ eventType: 'payment.alert', aggregateId: persistedPayment.id, payload: eventPayload }]
+                : []),
+              { eventType: 'payment.realtime', aggregateId: persistedPayment.id, payload: eventPayload },
+            ],
           });
-          isNewPayment = true;
-        } catch (err: any) {
-          if (err.code === 'P2002') {
-            // A concurrent processor (SSE stream + poll loop, or two
-            // overlapping bounded-backfill passes) inserted this payment
-            // first — reorg-like duplicate delivery, not a real error.
-            // Treat it as already recorded: don't re-alert.
-            log.info({ txHash }, '🔁 Duplicate payment insert raced and lost, skipping (already recorded)');
-            payment = await prisma.payment.findUnique({ where: { txHash } });
+        }
+
+        let cursorGap = { hasGap: false, ledgerDelta: 0 };
+        if (pagingToken) {
+          if (options.skipGapCheck) {
+            await tx.ingestionCursor.upsert({
+              where: { walletId: wallet.id },
+              create: { walletId: wallet.id, pagingToken },
+              update: { pagingToken, ...buildCursorSuccessUpdate() },
+            });
           } else {
             const previousPagingToken =
               options.previousPagingToken !== undefined
@@ -240,6 +244,9 @@ export async function processPaymentRecord(
           gap: cursorGap,
         };
       });
+      payment = transactionResult.payment;
+      isNewPayment = transactionResult.isNewPayment;
+      const { gap } = transactionResult;
 
       if (!payment) {
         throw new Error(`Payment ${txHash} was not available after its transactional insert`);
@@ -693,11 +700,14 @@ export async function startHorizonSSEStream(
             resetHeartbeat();
             attempts = 1;
             console.log(`[WatcherStream] ⚡ Live SSE stream message received: ${record.type}`);
-            await processPaymentRecord(wallet, record, { previousPagingToken: lastPagingToken });
-            const token = getHorizonPagingToken(record);
-            if (token) {
-              lastPagingToken = token;
-            }
+            await enqueueMessage(async () => {
+              await processPaymentRecord(wallet, record, { previousPagingToken: lastPagingToken });
+              const token = getHorizonPagingToken(record);
+              if (token) {
+                lastPagingToken = token;
+              }
+              streamMetrics.messagesProcessed++;
+            });
           },
           onerror: (error: Error | unknown) => {
             const errMsg = error instanceof Error ? error.message : String(error);

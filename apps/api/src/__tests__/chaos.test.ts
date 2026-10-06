@@ -272,16 +272,16 @@ vi.mock('../lib/queue', () => ({ enqueuePaymentAlert: vi.fn() }));
 vi.mock('../lib/lock', () => ({ withWalletLock: vi.fn(async (_id: string, fn: () => Promise<any>) => fn()) }));
 vi.mock('../workers/supervisor', () => ({ registerSupervisorHeartbeat: vi.fn() }));
 
+import { prisma } from '../lib/prisma';
+import { stellar } from '../lib/stellar';
+import { pollOnce } from '../workers/watcher.worker';
+
 describe('Chaos engineering: unhandled crash prevention (deterministic)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('a simulated Horizon outage (rejected getPaymentsSince) does not crash pollOnce', async () => {
-    const { prisma } = await import('../lib/prisma');
-    const { stellar } = await import('../lib/stellar');
-    const { pollOnce } = await import('../workers/watcher.worker');
-
     vi.mocked(prisma.wallet.findMany).mockResolvedValue([
       { id: 'w1', publicKey: 'GBPDX2DPUHABCGNHXQRNK5A6NGV5R7T244HJ5CXAWSWVRTZR4WMADE72', userId: 'u1' } as any,
     ]);
@@ -306,19 +306,12 @@ describe('Chaos engineering: unhandled crash prevention (deterministic)', () => 
   });
 
   it('a simulated DB disconnect (rejected wallet.findMany) does not crash pollOnce', async () => {
-    const { prisma } = await import('../lib/prisma');
-    const { pollOnce } = await import('../workers/watcher.worker');
-
     vi.mocked(prisma.wallet.findMany).mockRejectedValue(new Error('Connection terminated unexpectedly'));
 
     await expect(pollOnce()).resolves.toBeUndefined();
   });
 
   it('recovers on the next poll after a transient fault clears', async () => {
-    const { prisma } = await import('../lib/prisma');
-    const { stellar } = await import('../lib/stellar');
-    const { pollOnce } = await import('../workers/watcher.worker');
-
     vi.mocked(prisma.wallet.findMany).mockResolvedValue([
       { id: 'w1', publicKey: 'GBPDX2DPUHABCGNHXQRNK5A6NGV5R7T244HJ5CXAWSWVRTZR4WMADE72', userId: 'u1' } as any,
     ]);

@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const prismaMock = vi.hoisted(() => ({
   payment: {
     findUnique: vi.fn(),
+    create: vi.fn(),
     createMany: vi.fn(),
   },
   ingestionCursor: {
@@ -12,42 +13,20 @@ const prismaMock = vi.hoisted(() => ({
     upsert: vi.fn(),
   },
   notificationPreference: { findUnique: vi.fn().mockResolvedValue(null) },
+  outboxEvent: { createMany: vi.fn() },
+  alertRule: { findMany: vi.fn().mockResolvedValue([]) },
+  alertRuleDispatchLog: {
+    findUnique: vi.fn().mockResolvedValue(null),
+    create: vi.fn().mockResolvedValue({}),
+  },
 }));
 
 vi.mock('../../lib/prisma', () => ({
-  prisma: (() => {
-    const paymentCreate = vi.fn();
-    const outboxCreateMany = vi.fn();
-    const transaction = {
-      payment: { create: paymentCreate },
-      outboxEvent: { createMany: outboxCreateMany },
-    };
-
-    return {
-      payment: {
-        findUnique: vi.fn(),
-        create: paymentCreate,
-      },
-      ingestionCursor: {
-        findUnique: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-        upsert: vi.fn(),
-      },
-      notificationPreference: {
-        findUnique: vi.fn().mockResolvedValue(null),
-      },
-      alertRule: {
-        findMany: vi.fn().mockResolvedValue([]),
-      },
-      alertRuleDispatchLog: {
-        findUnique: vi.fn().mockResolvedValue(null),
-        create: vi.fn().mockResolvedValue({}),
-      },
-      outboxEvent: { createMany: outboxCreateMany },
-      $transaction: vi.fn((callback: (tx: typeof transaction) => unknown) => callback(transaction)),
-    };
-  })(),
+  prisma: {
+    ...prismaMock,
+    wallet: { findMany: vi.fn() },
+    $transaction: vi.fn((callback: (tx: typeof prismaMock) => unknown) => callback(prismaMock)),
+  },
 }));
 
 vi.mock('../../lib/stellar', () => ({
@@ -76,6 +55,9 @@ vi.mock('../../lib/lock', () => ({
 vi.mock('../../lib/realtime', () => ({
   publishPaymentEvent: vi.fn().mockResolvedValue(undefined),
   publishDeliveryEvent: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock('../../services/checksumChain.service', () => ({
+  appendPaymentChecksum: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { prisma } from '../../lib/prisma';
@@ -479,9 +461,9 @@ describe('Horizon SSE stream lifecycle', () => {
     const gate = new Promise<void>((resolve) => {
       resolveFirst = resolve;
     });
-    vi.mocked(prisma.payment.create).mockImplementationOnce(async () => {
+    vi.mocked(prisma.payment.createMany).mockImplementationOnce(async () => {
       await gate;
-      return { id: 'payment-1' } as any;
+      return { count: 1 } as any;
     });
 
     const close = await startHorizonSSEStream(wallet, { connector, maxQueuedMessages: 2 });
@@ -500,7 +482,7 @@ describe('Horizon SSE stream lifecycle', () => {
 
     resolveFirst();
     await Promise.all([first, second]);
-    expect(prisma.payment.create).toHaveBeenCalledTimes(2);
+    expect(prisma.payment.createMany).toHaveBeenCalledTimes(2);
 
     close();
     vi.useFakeTimers();
@@ -513,6 +495,9 @@ describe('processPaymentRecord — persisted AlertRule evaluator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(prisma.payment.findUnique).mockResolvedValue(null as any);
+    vi.mocked(prisma.payment.findUnique)
+      .mockResolvedValueOnce(null as any)
+      .mockResolvedValue({ id: 'payment-1' } as any);
     vi.mocked(prisma.payment.create).mockResolvedValue({ id: 'payment-1' } as any);
     vi.mocked(prisma.alertRule.findMany).mockResolvedValue([]);
     vi.mocked(prisma.alertRuleDispatchLog.findUnique).mockResolvedValue(null as any);
