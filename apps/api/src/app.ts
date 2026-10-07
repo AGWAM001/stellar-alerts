@@ -23,6 +23,7 @@ import { discordInteractionsRoutes } from './modules/discord-interactions';
 import { slackRoutes } from './modules/slack/slack.routes';
 import { graphqlRoutes } from './modules/graphql/graphql.routes';
 import { exportsRoutes } from './modules/exports/exports.routes';
+import { simulationRoutes } from './modules/simulation/simulation.routes';
 import { openApiOptions } from './openapi.config';
 import { loggerOptions } from './lib/logger';
 
@@ -196,6 +197,7 @@ export const buildApp = async () => {
   app.register(slackRoutes);
 await app.register(graphqlRoutes);
   app.register(exportsRoutes);
+  app.register(simulationRoutes);
   app.register(discordInteractionsRoutes);
 
   return app;
