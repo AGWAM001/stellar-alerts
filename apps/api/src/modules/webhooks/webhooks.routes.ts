@@ -24,4 +24,5 @@ export async function webhooksRoutes(app: FastifyInstance) {
   // diagnostic probe whose whole purpose is to send, so replaying a stored
   // response would make the second press look like it worked when nothing ran.
   app.post('/webhooks/:id/test', webhooksController.testWebhook.bind(webhooksController));
+  app.get('/webhooks/:id/logs', webhooksController.getWebhookLogs.bind(webhooksController));
 }
